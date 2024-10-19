@@ -1,22 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class WorldGeneration : MonoBehaviour
 {
     [SerializeField] int chunkSize;
 
-    [SerializeField] GameObject grass;
-    [SerializeField] GameObject water;
+    [SerializeField] Tilemap tilemap;
+    [SerializeField] TileBase grass;
+    [SerializeField] TileBase water;
 
-    List<List<int>> noise_grid = new List<List<int>>();
-    List<List<GameObject>> tile_grid = new List<List<GameObject>>();
-
-    [SerializeField] float magnification = 7;
-
-    [SerializeField] SO_FastNoiseLiteGenerator noiseGenerator = default;
-
-    int x_offset = 0;
-    int y_offset = 0;
+    [SerializeField] SO_FastNoiseLiteGenerator noiseGenerator;
+    [SerializeField] SO_FastNoiseLiteGenerator noiseIsland;
 
     // Start is called before the first frame update
     void Start()
@@ -27,8 +22,10 @@ public class WorldGeneration : MonoBehaviour
     [ContextMenu("Regenerate")]
     void Regenerate()
     {
-        foreach(Transform child in transform)
-            Destroy(child.gameObject);
+        tilemap.ClearAllTiles();
+
+        noiseGenerator.SetSeed((int)System.DateTime.Now.Ticks);
+        noiseIsland.SetSeed((int)System.DateTime.Now.Ticks);
 
         GenerateMap();
     }
@@ -37,40 +34,27 @@ public class WorldGeneration : MonoBehaviour
     {
         for (int x = 0; x < chunkSize; x++)
         {
-            noise_grid.Add(new List<int>());
-            tile_grid.Add(new List<GameObject>());
-
             for (int y = 0; y < chunkSize; y++)
             {
-                int tileId = GetTileUsingPerlin(x, y);
-                noise_grid[x].Add(tileId);
-                CreateTile(tileId, new(x, y));
+                int tileId = GetTileFromNoise(x, y);
+                CreateTile(tileId, new(x, y, 0));
             }
         }
     }
 
-    private void CreateTile(int tileId, Vector2 coordinate)
+    private void CreateTile(int tileId, Vector3Int coordinate)
     {
-        GameObject tile_prefab = tileId == 0 ? grass : water;
-        GameObject tile = Instantiate(tile_prefab, coordinate, Quaternion.identity);
-        tile.transform.parent = transform;
+        TileBase tile_prefab = tileId == 0 ? grass : water;
+        tilemap.SetTile(coordinate, tile_prefab);
     }
 
-    private int GetTileUsingPerlin(int x, int y)
+    private int GetTileFromNoise(int x, int y)
     {
-        float rawSimplex = noiseGenerator.GetNoise().GetNoise(
-            (x - x_offset) / magnification,
-            (y - y_offset) / magnification
-            );
+        float sample = noiseGenerator.GetNoiseClamped(new(x, y));
+        sample = Mathf.Pow(sample, noiseIsland.GetNoiseClamped(new(x,y)));
 
-        float rawPerlin = Mathf.PerlinNoise(
-            (x - x_offset) / magnification,
-            (y - y_offset) / magnification
-            );
+        sample *= 2;
 
-        float clamp_perlin = Mathf.Clamp(rawSimplex, 0f, 1f);
-        float scale_perlin = clamp_perlin * 2;
-        
-        return Mathf.FloorToInt(scale_perlin);
+        return Mathf.FloorToInt(sample);
     }
 }

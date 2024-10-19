@@ -10,8 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4105e8abc9555446b5b10c2e5ed683b, type: 3}
-  m_Name: Noise
+  m_Name: NoiseIsland
   m_EditorClassIdentifier: 
+  <NoiseScale>k__BackingField: 4
   noiseType: 0
   fractalType: 2
   domainWarpType: 0
