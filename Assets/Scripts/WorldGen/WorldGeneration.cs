@@ -1,51 +1,53 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Cysharp.Threading.Tasks;
 
 public class WorldGeneration : MonoBehaviour
 {
     [SerializeField] int chunkSize;
 
     [SerializeField] Tilemap tilemap;
-    [SerializeField] TileBase grass;
-    [SerializeField] TileBase water;
+    [SerializeField] GameObject grass;
+    [SerializeField] GameObject water;
 
     [SerializeField] SO_FastNoiseLiteGenerator noiseGenerator;
     [SerializeField] SO_FastNoiseLiteGenerator noiseIsland;
 
     // Start is called before the first frame update
-    void Start()
+    async UniTaskVoid Start()
     {
-        GenerateMap();
+        await GenerateChunk();
     }
 
     [ContextMenu("Regenerate")]
-    void Regenerate()
+     async UniTaskVoid Regenerate()
     {
         tilemap.ClearAllTiles();
 
         noiseGenerator.SetSeed((int)System.DateTime.Now.Ticks);
         noiseIsland.SetSeed((int)System.DateTime.Now.Ticks);
 
-        GenerateMap();
+        await GenerateChunk();
     }
 
-    public void GenerateMap()
+    async UniTask GenerateChunk()
     {
         for (int x = 0; x < chunkSize; x++)
         {
             for (int y = 0; y < chunkSize; y++)
             {
                 int tileId = GetTileFromNoise(x, y);
-                CreateTile(tileId, new(x, y, 0));
+                await CreateTile(tileId, new(x, 0, y));
             }
         }
     }
 
-    private void CreateTile(int tileId, Vector3Int coordinate)
+    async UniTask CreateTile(int tileId, Vector3Int coordinate)
     {
-        TileBase tile_prefab = tileId == 0 ? grass : water;
-        tilemap.SetTile(coordinate, tile_prefab);
+        if (tileId != 0) return;
+
+        await InstantiateAsync(grass, 1, transform, coordinate, Quaternion.identity);
     }
 
     private int GetTileFromNoise(int x, int y)
