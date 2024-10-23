@@ -10,6 +10,7 @@ public class SO_FastNoiseLiteGenerator: ScriptableObject
     [SerializeField] FastNoiseLite.NoiseType noiseType = FastNoiseLite.NoiseType.OpenSimplex2S;
     [SerializeField] FastNoiseLite.FractalType fractalType = FastNoiseLite.FractalType.Ridged;
     [SerializeField] FastNoiseLite.DomainWarpType domainWarpType = FastNoiseLite.DomainWarpType.OpenSimplex2;
+    public int Seed = 1337;
 
     FastNoiseLite noise = null;
 
@@ -33,7 +34,7 @@ public class SO_FastNoiseLiteGenerator: ScriptableObject
 
     public void CreateNoise()
     {
-        noise = new FastNoiseLite();
+        noise = new FastNoiseLite(Seed);
         noise.SetNoiseType(noiseType);
         noise.SetFractalType(fractalType);
         noise.SetDomainWarpType(domainWarpType);
