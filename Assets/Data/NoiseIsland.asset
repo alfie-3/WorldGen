@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4105e8abc9555446b5b10c2e5ed683b, type: 3}
   m_Name: NoiseIsland
   m_EditorClassIdentifier: 
-  <NoiseScale>k__BackingField: 3
+  <NoiseScale>k__BackingField: 1
   noiseType: 0
   fractalType: 5
   domainWarpType: 0
+  Seed: -1577826773

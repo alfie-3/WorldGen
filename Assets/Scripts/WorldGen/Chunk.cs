@@ -6,6 +6,7 @@ using UnityEngine;
 public class Chunk
 {
     public Vector2Int ChunkLocation {  get; private set; }
+    public Vector2Int ChunkGlobalLocation => ChunkLocation * WorldGeneration.CHUNK_SIZE;
     public Dictionary<Vector3, Tile> Tiles;
     public Mesh ChunkMesh;
 
@@ -22,16 +23,15 @@ public class Chunk
     public Chunk(Vector2Int chunkLocation)
     {
         Tiles = new();
-        ChunkMesh = new Mesh();
         ChunkStatus = CHUNK_STATUS.UNGENERATED;
         ChunkLocation = chunkLocation;
     }
 
     public void SetTile(TileData tileData, Vector3Int coordinate)
     {
-        if (!Tiles.TryAdd(coordinate, new(tileData)))
+        if (!Tiles.TryAdd(coordinate, new(tileData, coordinate)))
         {
-            Tiles[coordinate] = new(tileData);
+            Tiles[coordinate] = new(tileData, coordinate);
         }
     }
 

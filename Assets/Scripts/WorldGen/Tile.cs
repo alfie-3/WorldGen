@@ -6,9 +6,11 @@ using UnityEngine;
 public class Tile
 {
     public TileData tileData;
+    public Vector3Int tileLocation;
 
-    public Tile(TileData tileData)
+    public Tile(TileData tileData, Vector3Int location)
     {
         this.tileData = tileData;    
+        tileLocation = location;
     }
 }

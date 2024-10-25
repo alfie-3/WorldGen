@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.shniqq.fast-noise-lite": {
-      "version": "file:C:/Users/s4204826/OneDrive - University of Gloucestershire/Year3/PersonalPortfolio/Plugin/FastNoiseLite-Unity-master/FastNoiseLite-Unity-master",
+      "version": "file:C:/Users/trued/OneDrive - University of Gloucestershire/Year3/PersonalPortfolio/Plugin/FastNoiseLite-Unity-master/FastNoiseLite-Unity-master",
       "depth": 0,
       "source": "local",
       "dependencies": {}

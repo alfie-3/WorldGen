@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -13,6 +14,8 @@ public class WorldGeneration : MonoBehaviour
     //Noise Layers
     [SerializeField] SO_FastNoiseLiteGenerator noiseGenerator;
     [SerializeField] SO_FastNoiseLiteGenerator noiseIsland;
+
+    CancellationTokenSource tokenSource = new CancellationTokenSource();
 
     //Chunk Generation
     public int ChunkGenerationRange = 5;
@@ -44,19 +47,37 @@ public class WorldGeneration : MonoBehaviour
         {
             for (int y = 0; y < ChunkGenerationRange; y++)
             {
-                await GenerateChunk(new(x,y));
+                await UniTask.RunOnThreadPool(() => GenerateChunk(new(x, y)), cancellationToken: tokenSource.Token);
             }
         }
     }
 
-    async UniTask GenerateChunk(Vector2Int chunkCoordinate)
+    public void GenerateChunk(Vector2Int chunkCoordinate)
     {
         //Create New Chunk
         Chunk newChunk = CreateChunk(chunkCoordinate);
 
-        //Float for chunkgeneration speed
-        float timeStart = Time.unscaledTime;
+        //Create tiles in chunk
+        CreateTiles(chunkCoordinate);
 
+        //Chunk is finished
+        newChunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATED;
+    }
+
+    public Chunk CreateChunk(Vector2Int chunkLocation)
+    {
+        Chunk newChunk = new(chunkLocation)
+        {
+            ChunkStatus = Chunk.CHUNK_STATUS.GENERATING
+        };
+
+        ChunkDict.Add(chunkLocation, newChunk);
+
+        return newChunk;
+    }
+
+    public void CreateTiles(Vector2Int chunkCoordinate)
+    {
         //Create tiles in chunk
         for (int x = 0; x < CHUNK_SIZE; x++)
         {
@@ -67,19 +88,6 @@ public class WorldGeneration : MonoBehaviour
                 CreateTile(chunkCoordinate, tileId, new(tileLocation.x, 0, tileLocation.y));
             }
         }
-
-        //Chunk is finished
-        newChunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATED;
-        Debug.Log($"{chunkCoordinate} Generated in {Time.unscaledTime - timeStart} seconds");
-    }
-
-    public Chunk CreateChunk(Vector2Int chunkLocation)
-    {
-        Chunk newChunk = new(chunkLocation);
-        newChunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATING;
-        ChunkDict.Add(chunkLocation, newChunk);
-
-        return newChunk;
     }
 
     public void CreateTile(Vector2Int chunkLocation, int tileId, Vector3Int coordinate)
@@ -100,6 +108,10 @@ public class WorldGeneration : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+        ChunkDict.Clear();
+
+        tokenSource.Cancel();
+
         foreach(Transform child in transform)
             Destroy(child.gameObject);
     }

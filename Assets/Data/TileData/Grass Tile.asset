@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 628c35ffa8d75d444b81a1eb00731cdf, type: 3}
   m_Name: Grass Tile
   m_EditorClassIdentifier: 
-  <TileId>k__BackingField: 
+  <TileId>k__BackingField: GrassTile
   <TileMesh>k__BackingField: {fileID: -5495902117074765545, guid: 0484591a56167594084836f7151db4a6, type: 3}
   <TileMaterial>k__BackingField: {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}

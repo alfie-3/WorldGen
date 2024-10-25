@@ -387,6 +387,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1901864791}
   - component: {fileID: 1901864790}
+  - component: {fileID: 1901864792}
   m_Layer: 0
   m_Name: WorldGen
   m_TagString: Untagged
@@ -406,8 +407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3f4406dfb923fe49b8ea3e0de0cc03c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  grass: {fileID: 1627961707121471228, guid: 420d60c8a48971548995f03811d27fa1, type: 3}
-  water: {fileID: 1627961707121471228, guid: 8439c1015ee8a0243a7b260fb197ed2b, type: 3}
+  grass: {fileID: 11400000, guid: 5901fef6d3f4e414a850a8d773cf9e8b, type: 2}
   noiseGenerator: {fileID: 11400000, guid: f50be40f3a69f7c4c88731ceef6e122f, type: 2}
   noiseIsland: {fileID: 11400000, guid: 4308316e340732a4c88d951639d99fc5, type: 2}
   ChunkGenerationRange: 5
@@ -420,12 +420,25 @@ Transform:
   m_GameObject: {fileID: 1901864789}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.2375786, y: 2.2530074, z: 8.0267725}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1901864792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901864789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb668be202717bb4587eab77d3b91ed2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WorldGeneration: {fileID: 1901864790}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
