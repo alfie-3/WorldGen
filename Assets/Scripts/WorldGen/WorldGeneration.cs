@@ -8,6 +8,7 @@ using UnityEngine.Tilemaps;
 public class WorldGeneration : MonoBehaviour
 {
     //Tile stuff TEMP
+    [SerializeField] TileData water;
     [SerializeField] TileData grass;
 
     //Noise Layers
@@ -98,8 +99,7 @@ public class WorldGeneration : MonoBehaviour
 
     public void CreateTile(Vector2Int chunkLocation, int tileId, Vector3Int coordinate)
     {
-        if (tileId == 0) return;
-        ChunkDict[chunkLocation].SetTile(grass, coordinate);
+        ChunkDict[chunkLocation].SetTile(tileId == 0 ? water : grass, coordinate);
     }
 
     private int GetTileFromNoise(int x, int y)

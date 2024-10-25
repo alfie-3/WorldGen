@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class TileBatch
 {
@@ -27,6 +28,7 @@ public class TileBatch
 public class WorldRenderer : MonoBehaviour
 {
     public WorldGeneration WorldGeneration;
+    public string Filter;
 
     Dictionary<Vector2Int, Dictionary<string, TileBatch>> chunkBatchTiles = new();
 
@@ -47,7 +49,7 @@ public class WorldRenderer : MonoBehaviour
             TileData data = tile.Value.tileData;
 
             chunkBatchTiles[chunkKey].TryAdd(data.TileId, new(data));
-            chunkBatchTiles[chunkKey][data.TileId].matricies.Add(Matrix4x4.Translate(tile.Key));
+            chunkBatchTiles[chunkKey][data.TileId].matricies.Add(Matrix4x4.Translate(tile.Value.tileLocation));
         }
     }
 
@@ -57,6 +59,8 @@ public class WorldRenderer : MonoBehaviour
         {
             foreach (KeyValuePair<string, TileBatch> chunkBatch in chunkBatches.Value)
             {
+                if (chunkBatch.Key == Filter) continue;
+
                 RenderParams rp = new RenderParams(chunkBatch.Value.tileData.TileMaterial);
                 Graphics.RenderMeshInstanced(rp, chunkBatch.Value.tileData.TileMesh, 0, chunkBatch.Value.GetMatricies());
             }
