@@ -407,6 +407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3f4406dfb923fe49b8ea3e0de0cc03c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  water: {fileID: 11400000, guid: 900575fab35060849ab43b11fbd826da, type: 2}
   grass: {fileID: 11400000, guid: 5901fef6d3f4e414a850a8d773cf9e8b, type: 2}
   noiseGenerator: {fileID: 11400000, guid: f50be40f3a69f7c4c88731ceef6e122f, type: 2}
   noiseIsland: {fileID: 11400000, guid: 4308316e340732a4c88d951639d99fc5, type: 2}
@@ -439,6 +440,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WorldGeneration: {fileID: 1901864790}
+  Filter: WaterTile
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
