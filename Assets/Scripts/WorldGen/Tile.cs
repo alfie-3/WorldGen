@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public struct Tile
+public class Tile
 {
-    public string TileType;
+    public TileData tileData;
 
-    public Tile(string tileType)
+    public Tile(TileData tileData)
     {
-        TileType = tileType;    
+        this.tileData = tileData;    
     }
 }

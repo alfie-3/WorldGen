@@ -5,11 +5,10 @@ using UnityEngine.Tilemaps;
 
 public class WorldGeneration : MonoBehaviour
 {
-    const int CHUNK_SIZE = 16;
+    public const int CHUNK_SIZE = 16;
 
     //Tile stuff TEMP
-    [SerializeField] GameObject grass;
-    [SerializeField] GameObject water;
+    [SerializeField] TileData grass;
 
     //Noise Layers
     [SerializeField] SO_FastNoiseLiteGenerator noiseGenerator;
@@ -18,7 +17,7 @@ public class WorldGeneration : MonoBehaviour
     //Chunk Generation
     public int ChunkGenerationRange = 5;
 
-    public static Dictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
+    public static Dictionary<Vector2, Chunk> ChunkDict { get; private set; } = new();
 
     // Start is called before the first frame update
     async UniTaskVoid Start()
@@ -65,28 +64,28 @@ public class WorldGeneration : MonoBehaviour
             {
                 Vector2Int tileLocation = new Vector2Int(x + (chunkCoordinate.x * CHUNK_SIZE), y + (chunkCoordinate.y * CHUNK_SIZE));
                 int tileId = GetTileFromNoise(tileLocation.x, tileLocation.y);
-                await CreateTile(chunkCoordinate, tileId, new(tileLocation.x, 0, tileLocation.y));
+                CreateTile(chunkCoordinate, tileId, new(tileLocation.x, 0, tileLocation.y));
             }
         }
 
         //Chunk is finished
-        newChunk.SetGenerationStatus(Chunk.GenerationStatus.GENERATED);
+        newChunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATED;
         Debug.Log($"{chunkCoordinate} Generated in {Time.unscaledTime - timeStart} seconds");
     }
 
     public Chunk CreateChunk(Vector2Int chunkLocation)
     {
         Chunk newChunk = new(chunkLocation);
-        newChunk.SetGenerationStatus(Chunk.GenerationStatus.GENERATING);
+        newChunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATING;
         ChunkDict.Add(chunkLocation, newChunk);
 
         return newChunk;
     }
 
-    async UniTask CreateTile(Vector2Int chunkLocation, int tileId, Vector3Int coordinate)
+    public void CreateTile(Vector2Int chunkLocation, int tileId, Vector3Int coordinate)
     {
-        await InstantiateAsync(tileId == 0 ? water : grass, 1, transform, coordinate, Quaternion.identity);
-        ChunkDict[chunkLocation].AddTile(new(tileId.ToString()), coordinate);
+        if (tileId == 0) return;
+        ChunkDict[chunkLocation].SetTile(grass, coordinate);
     }
 
     private int GetTileFromNoise(int x, int y)

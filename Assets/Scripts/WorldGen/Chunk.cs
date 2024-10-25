@@ -3,35 +3,36 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public struct Chunk
+public class Chunk
 {
     public Vector2Int ChunkLocation {  get; private set; }
-    public Dictionary<Vector3Int, Tile> Tiles;
+    public Dictionary<Vector3, Tile> Tiles;
+    public Mesh ChunkMesh;
 
-    public enum GenerationStatus
+    public enum CHUNK_STATUS
     {
         UNGENERATED,
         GENERATING,
-        GENERATED
+        GENERATED,
+        SLEEPING
     }
 
-    public GenerationStatus generationStatus;
+    public CHUNK_STATUS ChunkStatus;
 
     public Chunk(Vector2Int chunkLocation)
     {
         Tiles = new();
-        generationStatus = GenerationStatus.UNGENERATED;
+        ChunkMesh = new Mesh();
+        ChunkStatus = CHUNK_STATUS.UNGENERATED;
         ChunkLocation = chunkLocation;
     }
 
-    public void SetGenerationStatus(GenerationStatus generationStatus)
+    public void SetTile(TileData tileData, Vector3Int coordinate)
     {
-        this.generationStatus = generationStatus;
-    }
-
-    public void AddTile(Tile tile, Vector3Int coordinate)
-    {
-        Tiles.Add(coordinate, tile);
+        if (!Tiles.TryAdd(coordinate, new(tileData)))
+        {
+            Tiles[coordinate] = new(tileData);
+        }
     }
 
     public Tile GetTile(Vector3Int coordinate)
