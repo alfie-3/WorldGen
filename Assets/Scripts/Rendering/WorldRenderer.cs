@@ -1,40 +1,65 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public class TileBatch
+{
+    public List<Matrix4x4> matricies = new();
+    public Matrix4x4[] matriciesArray;
+
+    public Matrix4x4[] GetMatricies()
+    {
+        if (matriciesArray != null) return matriciesArray;
+        
+        matriciesArray = matricies.ToArray();
+        matricies = null;
+
+        return matriciesArray;
+    }
+
+    public TileData tileData;
+
+    public TileBatch(TileData tileData)
+    {
+        this.tileData = tileData;
+    }
+}
+
 public class WorldRenderer : MonoBehaviour
 {
     public WorldGeneration WorldGeneration;
 
-    Dictionary<string, List<Tile>> batchTilesDict = new Dictionary<string, List<Tile>>();
+    Dictionary<Vector2Int, Dictionary<string, TileBatch>> chunkBatchTiles = new();
+
+    private void OnEnable()
+    {
+        WorldGeneration.chunkReady += BatchTerrain;
+    }
+
+    private void BatchTerrain(Vector2Int chunkKey)
+    {
+        if (!chunkBatchTiles.TryAdd(chunkKey, new()))
+        {
+            chunkBatchTiles[chunkKey].Clear();
+        }
+
+        foreach (KeyValuePair<Vector3Int, Tile> tile in WorldGeneration.ChunkDict[chunkKey].Tiles)
+        {
+            TileData data = tile.Value.tileData;
+
+            chunkBatchTiles[chunkKey].TryAdd(data.TileId, new(data));
+            chunkBatchTiles[chunkKey][data.TileId].matricies.Add(Matrix4x4.Translate(tile.Key));
+        }
+    }
 
     private void LateUpdate()
     {
-        foreach (KeyValuePair<Vector2, Chunk> chunk in WorldGeneration.ChunkDict)
+        foreach (KeyValuePair<Vector2Int, Dictionary<string, TileBatch>> chunkBatches in chunkBatchTiles)
         {
-            if (chunk.Value.ChunkStatus != Chunk.CHUNK_STATUS.GENERATED) return;
-
-            foreach (KeyValuePair<Vector3, Tile> tile in chunk.Value.Tiles)
+            foreach (KeyValuePair<string, TileBatch> chunkBatch in chunkBatches.Value)
             {
-                batchTilesDict.TryAdd(tile.Value.tileData.TileId, new List<Tile>());
-                batchTilesDict[tile.Value.tileData.TileId].Add(tile.Value);
-
-                //TileData data = tile.Value.tileData;
-                //if (rp.material != data.TileMaterial) rp = new(data.TileMaterial);
-                //Graphics.RenderMesh(rp, data.TileMesh, 0, Matrix4x4.Translate(tile.Key));
+                RenderParams rp = new RenderParams(chunkBatch.Value.tileData.TileMaterial);
+                Graphics.RenderMeshInstanced(rp, chunkBatch.Value.tileData.TileMesh, 0, chunkBatch.Value.GetMatricies());
             }
-
-            foreach (KeyValuePair<string, List<Tile>> batchTileList in batchTilesDict)
-            {
-                Matrix4x4[] matricies = new Matrix4x4[batchTileList.Value.Count];
-                for (int i = 0; i < matricies.Length; i++)
-                {
-                    matricies[i] = Matrix4x4.Translate(batchTileList.Value[i].tileLocation);
-                }
-
-                Graphics.DrawMeshInstanced(batchTileList.Value[0].tileData.TileMesh, 0, batchTileList.Value[0].tileData.TileMaterial, matricies);
-            }
-
-            batchTilesDict.Clear();
         }
     }
 
@@ -43,7 +68,7 @@ public class WorldRenderer : MonoBehaviour
         if (WorldGeneration == null) return;
         if (WorldGeneration.ChunkDict == null) return;
 
-        foreach (KeyValuePair<Vector2, Chunk> chunk in WorldGeneration.ChunkDict)
+        foreach (KeyValuePair<Vector2Int, Chunk> chunk in WorldGeneration.ChunkDict)
         {
             Gizmos.matrix = Matrix4x4.Translate(new(WorldGeneration.CHUNK_SIZE / 2, 0, WorldGeneration.CHUNK_SIZE / 2));
 

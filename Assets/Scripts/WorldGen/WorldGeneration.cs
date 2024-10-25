@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -6,8 +7,6 @@ using UnityEngine.Tilemaps;
 
 public class WorldGeneration : MonoBehaviour
 {
-    public const int CHUNK_SIZE = 16;
-
     //Tile stuff TEMP
     [SerializeField] TileData grass;
 
@@ -18,9 +17,10 @@ public class WorldGeneration : MonoBehaviour
     CancellationTokenSource tokenSource = new CancellationTokenSource();
 
     //Chunk Generation
+    public const int CHUNK_SIZE = 16;
     public int ChunkGenerationRange = 5;
-
-    public static Dictionary<Vector2, Chunk> ChunkDict { get; private set; } = new();
+    public static Dictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
+    public Action<Vector2Int> chunkReady;
 
     // Start is called before the first frame update
     async UniTaskVoid Start()
@@ -48,6 +48,7 @@ public class WorldGeneration : MonoBehaviour
             for (int y = 0; y < ChunkGenerationRange; y++)
             {
                 await UniTask.RunOnThreadPool(() => GenerateChunk(new(x, y)), cancellationToken: tokenSource.Token);
+                chunkReady.Invoke(new(x, y));
             }
         }
     }
@@ -74,6 +75,11 @@ public class WorldGeneration : MonoBehaviour
         ChunkDict.Add(chunkLocation, newChunk);
 
         return newChunk;
+    }
+
+    public Chunk GetChunk(Vector2Int chunkCoordinate)
+    {
+        return ChunkDict[chunkCoordinate];
     }
 
     public void CreateTiles(Vector2Int chunkCoordinate)
