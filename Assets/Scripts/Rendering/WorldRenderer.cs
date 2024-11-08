@@ -57,6 +57,8 @@ public class WorldRenderer : MonoBehaviour
     {
         foreach (KeyValuePair<Vector2Int, Dictionary<string, TileBatch>> chunkBatches in chunkBatchTiles)
         {
+            if (Vector2Int.Distance(chunkBatches.Key, WorldGeneration.GetPlayerChunkLocation()) > WorldGeneration.ChunkGenerationRange + 1) { continue; }   
+
             foreach (KeyValuePair<string, TileBatch> chunkBatch in chunkBatches.Value)
             {
                 if (chunkBatch.Key == Filter) continue;

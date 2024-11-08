@@ -23,8 +23,20 @@ public class WorldGeneration : MonoBehaviour
     public static Dictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
     public Action<Vector2Int> chunkReady;
 
+    Transform PlayerTransform;
+
+    public void Awake()
+    {
+        PlayerTransform = Camera.main.transform;
+    }
+
     // Start is called before the first frame update
     async UniTaskVoid Start()
+    {
+        await GenerateChunks();
+    }
+
+    public async UniTaskVoid Update()
     {
         await GenerateChunks();
     }
@@ -44,17 +56,22 @@ public class WorldGeneration : MonoBehaviour
 
     async UniTask GenerateChunks()
     {
-        for (int x = 0; x < ChunkGenerationRange; x++)
+        Vector2Int playerChunkLoc = GetPlayerChunkLocation();
+        Debug.Log(playerChunkLoc);
+
+        for (int x = playerChunkLoc.x - ChunkGenerationRange; x < playerChunkLoc.x + ChunkGenerationRange; x++)
         {
-            for (int y = 0; y < ChunkGenerationRange; y++)
+            for (int y = playerChunkLoc.y - ChunkGenerationRange; y < playerChunkLoc.y + ChunkGenerationRange; y++)
             {
-                await UniTask.RunOnThreadPool(() => GenerateChunk(new(x, y)), cancellationToken: tokenSource.Token);
+                if (IsChunkGenerated(new(x,y))) { continue; }
+
+                Chunk newChunk = await UniTask.RunOnThreadPool(() => GenerateChunk(new(x, y)), cancellationToken: tokenSource.Token);
                 chunkReady.Invoke(new(x, y));
             }
         }
     }
 
-    public void GenerateChunk(Vector2Int chunkCoordinate)
+    public Chunk GenerateChunk(Vector2Int chunkCoordinate)
     {
         //Create New Chunk
         Chunk newChunk = CreateChunk(chunkCoordinate);
@@ -64,6 +81,8 @@ public class WorldGeneration : MonoBehaviour
 
         //Chunk is finished
         newChunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATED;
+
+        return newChunk;
     }
 
     public Chunk CreateChunk(Vector2Int chunkLocation)
@@ -73,14 +92,33 @@ public class WorldGeneration : MonoBehaviour
             ChunkStatus = Chunk.CHUNK_STATUS.GENERATING
         };
 
-        ChunkDict.Add(chunkLocation, newChunk);
+        ChunkDict.TryAdd(chunkLocation, newChunk);
 
         return newChunk;
     }
 
     public Chunk GetChunk(Vector2Int chunkCoordinate)
     {
-        return ChunkDict[chunkCoordinate];
+        if (ChunkDict.TryGetValue(chunkCoordinate, out Chunk chunk))
+        {
+            return chunk;
+        }
+        return null;
+    }
+
+    public bool IsChunkGenerated(Vector2Int chunkCoordinate)
+    {
+        if (ChunkDict.TryGetValue(chunkCoordinate, out Chunk chunk))
+        {
+            return chunk.ChunkStatus == Chunk.CHUNK_STATUS.GENERATED;
+        }
+        else
+            return false;
+    }
+
+    public Vector2Int GetPlayerChunkLocation()
+    {
+        return Vector2Int.RoundToInt(new(PlayerTransform.position.x, PlayerTransform.position.z)) / CHUNK_SIZE;
     }
 
     public void CreateTiles(Vector2Int chunkCoordinate)

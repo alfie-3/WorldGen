@@ -18,7 +18,7 @@ public class Chunk
         SLEEPING
     }
 
-    public CHUNK_STATUS ChunkStatus;
+    public CHUNK_STATUS ChunkStatus = CHUNK_STATUS.UNGENERATED;
 
     public Chunk(Vector2Int chunkLocation)
     {
