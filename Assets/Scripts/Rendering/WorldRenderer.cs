@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -35,6 +36,12 @@ public class WorldRenderer : MonoBehaviour
     private void OnEnable()
     {
         WorldGeneration.chunkReady += BatchTerrain;
+        WorldGeneration.chunkRemoved += RemoveChunk;
+    }
+
+    private void RemoveChunk(Vector2Int loc)
+    {
+        chunkBatchTiles.Remove(loc);
     }
 
     private void BatchTerrain(Vector2Int chunkKey)

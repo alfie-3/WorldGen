@@ -20,8 +20,12 @@ public class WorldGeneration : MonoBehaviour
     //Chunk Generation
     public const int CHUNK_SIZE = 16;
     public int ChunkGenerationRange = 5;
+    public int ChunkReleaseRange = 20;
+
     public static Dictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
+
     public Action<Vector2Int> chunkReady;
+    public Action<Vector2Int> chunkRemoved;
 
     Transform PlayerTransform;
 
@@ -39,6 +43,8 @@ public class WorldGeneration : MonoBehaviour
     public async UniTaskVoid Update()
     {
         await GenerateChunks();
+
+        CheckClearChunks();
     }
 
     [ContextMenu("Regenerate")]
@@ -114,6 +120,18 @@ public class WorldGeneration : MonoBehaviour
         }
         else
             return false;
+    }
+
+    public void CheckClearChunks()
+    {
+        foreach (Vector2Int loc in ChunkDict.Keys)
+        {
+            if (Vector2Int.Distance(GetPlayerChunkLocation(), ChunkDict[loc].ChunkLocation) > ChunkReleaseRange)
+            {
+                ChunkDict.Remove(loc);
+                chunkRemoved.Invoke(loc);
+            }
+        }
     }
 
     public Vector2Int GetPlayerChunkLocation()

@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: ceb47cd920362314b95ba0cd0bb35ac2
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - <TileMesh>k__BackingField: {instanceID: 0}
+  - <TileMaterial>k__BackingField: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
