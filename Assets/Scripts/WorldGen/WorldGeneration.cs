@@ -66,6 +66,8 @@ public class WorldGeneration : MonoBehaviour
                 if (IsChunkGenerated(new(x,y))) { continue; }
 
                 Chunk newChunk = await UniTask.RunOnThreadPool(() => GenerateChunk(new(x, y)), cancellationToken: tokenSource.Token);
+                ChunkDict.TryAdd(new(x, y), newChunk);
+
                 chunkReady.Invoke(new(x, y));
             }
         }
@@ -77,7 +79,7 @@ public class WorldGeneration : MonoBehaviour
         Chunk newChunk = CreateChunk(chunkCoordinate);
 
         //Create tiles in chunk
-        CreateTiles(chunkCoordinate);
+        CreateTiles(newChunk);
 
         //Chunk is finished
         newChunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATED;
@@ -91,8 +93,6 @@ public class WorldGeneration : MonoBehaviour
         {
             ChunkStatus = Chunk.CHUNK_STATUS.GENERATING
         };
-
-        ChunkDict.TryAdd(chunkLocation, newChunk);
 
         return newChunk;
     }
@@ -121,23 +121,24 @@ public class WorldGeneration : MonoBehaviour
         return Vector2Int.RoundToInt(new(PlayerTransform.position.x, PlayerTransform.position.z)) / CHUNK_SIZE;
     }
 
-    public void CreateTiles(Vector2Int chunkCoordinate)
+    public void CreateTiles(Chunk chunk)
     {
         //Create tiles in chunk
         for (int x = 0; x < CHUNK_SIZE; x++)
         {
             for (int y = 0; y < CHUNK_SIZE; y++)
             {
-                Vector2Int tileLocation = new Vector2Int(x + (chunkCoordinate.x * CHUNK_SIZE), y + (chunkCoordinate.y * CHUNK_SIZE));
+                Vector2Int tileLocation = new Vector2Int(x + (chunk.ChunkLocation.x * CHUNK_SIZE), y + (chunk.ChunkLocation.y * CHUNK_SIZE));
                 int tileId = GetTileFromNoise(tileLocation.x, tileLocation.y);
-                CreateTile(chunkCoordinate, tileId, new(tileLocation.x, 0, tileLocation.y));
+                CreateTile(chunk, tileId, new(tileLocation.x, 0, tileLocation.y));
             }
         }
     }
 
-    public void CreateTile(Vector2Int chunkLocation, int tileId, Vector3Int coordinate)
+    public void CreateTile(Chunk chunk, int tileId, Vector3Int coordinate)
     {
-        ChunkDict[chunkLocation].SetTile(tileId == 0 ? water : grass, coordinate);
+        if (tileId == 0) return;
+        chunk.SetTile(grass, coordinate);
     }
 
     private int GetTileFromNoise(int x, int y)
