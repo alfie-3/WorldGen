@@ -10,19 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ceb47cd920362314b95ba0cd0bb35ac2, type: 3}
-  m_Name: Grass Rule Tile
+  m_Name: GrassRuleTile
   m_EditorClassIdentifier: 
-  <TileId>k__BackingField: 
+  <TileId>k__BackingField: GrassRuleTile
   <TileMesh>k__BackingField: {fileID: 6387572079606824178, guid: 61f20381a49585d48872763e244283ec, type: 3}
-  <TileMaterial>k__BackingField: {fileID: 0}
-  TopLeftRules:
-  - Comparrison: {fileID: 0}
-    Result: {fileID: 0}
-  TopMiddleRules: []
-  TopRightRules: []
-  MiddleLeftRules: []
-  CenterRules: []
-  MiddleRightRules: []
-  BottomLeftRules: []
-  BottomMiddleRules: []
-  BottomRightRules: []
+  <TileMaterial>k__BackingField: {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
+  Rules:
+  - tile: {fileID: 11400000, guid: 34b4adc23c095454585158344e1376ba, type: 2}
+    NeighbourRules: 0000000000000000000000000000000000000000000000000100000000000000
+  Neighbours: 0000000000000000000000000100000000000000010000000100000000000000

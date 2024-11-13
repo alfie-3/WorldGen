@@ -6,6 +6,8 @@ using UnityEngine;
 public class Tile
 {
     public TileData tileData;
+
+    //Tile location is GLOBAL not local to the chunk
     public Vector3Int tileLocation;
 
     public Tile(TileData tileData, Vector3Int location)

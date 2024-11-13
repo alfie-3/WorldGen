@@ -35,16 +35,17 @@ public class Chunk
         }
     }
 
-    public Tile GetTile(Vector3Int coordinate)
+    public bool GetTile(Vector3Int coordinate, out Tile returnTile)
     {
         if (Tiles.TryGetValue(coordinate, out Tile tile))
         {
-            return tile;
+            returnTile = tile;
+            return true;
         }
         else
         {
-            Debug.Log($"Invalid Tile in chunk {ChunkLocation} at {coordinate}");
-            return default;
+            returnTile = null;
+            return false;
         }
     }
 }

@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 628c35ffa8d75d444b81a1eb00731cdf, type: 3}
+  m_Name: Grass Tile Top Right
+  m_EditorClassIdentifier: 
+  <TileId>k__BackingField: GrassTile_TR
+  <TileMesh>k__BackingField: {fileID: 315514278642544510, guid: 61f20381a49585d48872763e244283ec, type: 3}
+  <TileMaterial>k__BackingField: {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}

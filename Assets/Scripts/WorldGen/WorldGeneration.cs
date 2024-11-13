@@ -3,12 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 public class WorldGeneration : MonoBehaviour
 {
     //Tile stuff TEMP
-    [SerializeField] TileData water;
     [SerializeField] TileData grass;
 
     //Noise Layers
@@ -19,8 +17,8 @@ public class WorldGeneration : MonoBehaviour
 
     //Chunk Generation
     public const int CHUNK_SIZE = 16;
-    public int ChunkGenerationRange = 5;
-    public int ChunkReleaseRange = 20;
+    public static int ChunkGenerationRange = 5;
+    public static int ChunkReleaseRange = 20;
 
     public static Dictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
@@ -28,6 +26,12 @@ public class WorldGeneration : MonoBehaviour
     public Action<Vector2Int> chunkRemoved;
 
     Transform PlayerTransform;
+
+    public enum CoordinateMode
+    {
+        Local,
+        Global
+    }
 
     public void Awake()
     {
@@ -63,13 +67,12 @@ public class WorldGeneration : MonoBehaviour
     async UniTask GenerateChunks()
     {
         Vector2Int playerChunkLoc = GetPlayerChunkLocation();
-        Debug.Log(playerChunkLoc);
 
         for (int x = playerChunkLoc.x - ChunkGenerationRange; x < playerChunkLoc.x + ChunkGenerationRange; x++)
         {
             for (int y = playerChunkLoc.y - ChunkGenerationRange; y < playerChunkLoc.y + ChunkGenerationRange; y++)
             {
-                if (IsChunkGenerated(new(x,y))) { continue; }
+                if (IsChunkGenerated(new(x, y))) { continue; }
 
                 Chunk newChunk = await UniTask.RunOnThreadPool(() => GenerateChunk(new(x, y)), cancellationToken: tokenSource.Token);
                 ChunkDict.TryAdd(new(x, y), newChunk);
@@ -103,13 +106,25 @@ public class WorldGeneration : MonoBehaviour
         return newChunk;
     }
 
-    public Chunk GetChunk(Vector2Int chunkCoordinate)
+    public static Chunk GetChunk(Vector2Int chunkCoordinate)
     {
         if (ChunkDict.TryGetValue(chunkCoordinate, out Chunk chunk))
         {
             return chunk;
         }
         return null;
+    }
+
+    public static Tile GetTile(Chunk chunk, Vector3Int tileCoordinate, CoordinateMode coordMode = CoordinateMode.Global)
+    {
+        if (chunk.GetTile(tileCoordinate, out Tile tile))
+        {
+            return tile;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     public bool IsChunkGenerated(Vector2Int chunkCoordinate)
@@ -156,7 +171,7 @@ public class WorldGeneration : MonoBehaviour
     public void CreateTile(Chunk chunk, int tileId, Vector3Int coordinate)
     {
         if (tileId == 0) return;
-        chunk.SetTile(grass, coordinate);
+        chunk.SetTile(grass.GetTileData(chunk, coordinate), coordinate);
     }
 
     private int GetTileFromNoise(int x, int y)
@@ -175,7 +190,7 @@ public class WorldGeneration : MonoBehaviour
 
         tokenSource.Cancel();
 
-        foreach(Transform child in transform)
+        foreach (Transform child in transform)
             Destroy(child.gameObject);
     }
 }

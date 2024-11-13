@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 628c35ffa8d75d444b81a1eb00731cdf, type: 3}
-  m_Name: Grass Tile
+  m_Name: Grass Tile Bottom Left
   m_EditorClassIdentifier: 
-  <TileId>k__BackingField: GrassTile
-  <TileMesh>k__BackingField: {fileID: 6387572079606824178, guid: 61f20381a49585d48872763e244283ec, type: 3}
+  <TileId>k__BackingField: GrassTile_BL
+  <TileMesh>k__BackingField: {fileID: -8300561069617193866, guid: 61f20381a49585d48872763e244283ec, type: 3}
   <TileMaterial>k__BackingField: {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}

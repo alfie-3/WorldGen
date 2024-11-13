@@ -423,6 +423,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   camMoveSpeed: 10
+  moveSpeedMult: 1.5
 --- !u!1 &1286674111
 GameObject:
   m_ObjectHideFlags: 0
@@ -454,11 +455,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   water: {fileID: 11400000, guid: 900575fab35060849ab43b11fbd826da, type: 2}
-  grass: {fileID: 11400000, guid: 5901fef6d3f4e414a850a8d773cf9e8b, type: 2}
+  grass: {fileID: 11400000, guid: 693a9d0160d78594eb70695e6b153313, type: 2}
   noiseGenerator: {fileID: 11400000, guid: f50be40f3a69f7c4c88731ceef6e122f, type: 2}
   noiseIsland: {fileID: 11400000, guid: 4308316e340732a4c88d951639d99fc5, type: 2}
-  ChunkGenerationRange: 8
-  ChunkReleaseRange: 20
 --- !u!4 &1286674113
 Transform:
   m_ObjectHideFlags: 0

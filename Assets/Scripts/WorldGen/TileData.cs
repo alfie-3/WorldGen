@@ -9,5 +9,5 @@ public class TileData : ScriptableObject
     [field: SerializeField] public Mesh TileMesh {  get; private set; }
     [field: SerializeField] public Material TileMaterial { get; private set; }
 
-    public virtual TileData GetTileData() { return this; }
+    public virtual TileData GetTileData(Chunk chunk, Vector3Int location) { return this; }
 }
