@@ -4,7 +4,7 @@ using UnityEngine;
 using static UnityEngine.RuleTile.TilingRuleOutput;
 
 [CreateAssetMenu(fileName = "New Rule Tile", menuName = "Tiles/New Rule Tile Data", order = 1)]
-public class RuleTileData : TileData
+public class RuleTileData : TileData, IRuleTile
 {
     public List<TilingRule> Rules;
 
@@ -37,7 +37,7 @@ public class RuleTileData : TileData
         return neighbours;
     }
 
-    public override TileData GetTileData(Chunk chunk, Vector3Int location)
+    public TileData GetTileData(Chunk chunk, Vector3Int location)
     {
         Neighbours = GetNeighbours(chunk, location);
 

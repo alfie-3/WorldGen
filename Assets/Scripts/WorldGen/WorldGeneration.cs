@@ -77,6 +77,14 @@ public class WorldGeneration : MonoBehaviour
                 Chunk newChunk = await UniTask.RunOnThreadPool(() => GenerateChunk(new(x, y)), cancellationToken: tokenSource.Token);
                 ChunkDict.TryAdd(new(x, y), newChunk);
 
+                foreach (Tile tile in newChunk.Tiles.Values)
+                {
+                    if (tile.tileData is IRuleTile iRuleTile)
+                    {
+                        tile.tileData = iRuleTile.GetTileData(newChunk, tile.tileLocation);
+                    }
+                }
+
                 chunkReady.Invoke(new(x, y));
             }
         }
@@ -171,7 +179,7 @@ public class WorldGeneration : MonoBehaviour
     public void CreateTile(Chunk chunk, int tileId, Vector3Int coordinate)
     {
         if (tileId == 0) return;
-        chunk.SetTile(grass.GetTileData(chunk, coordinate), coordinate);
+        chunk.SetTile(grass, coordinate);
     }
 
     private int GetTileFromNoise(int x, int y)
