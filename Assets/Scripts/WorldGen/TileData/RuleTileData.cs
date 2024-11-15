@@ -8,7 +8,7 @@ public class RuleTileData : TileData, IRuleTile
 {
     public List<TilingRule> Rules;
 
-    public List<int> Neighbours;
+    int[] Neighbours = new int[8];
     public static List<Vector3Int> NeighbourPositions = new List<Vector3Int>()
     {
                 new Vector3Int(-1, 0, 1),
@@ -22,24 +22,20 @@ public class RuleTileData : TileData, IRuleTile
     };
 
 
-    public List<int> GetNeighbours(Chunk chunk, Vector3Int location)
+    public void GetNeighbours(Chunk chunk, Vector3Int location)
     {
-        Tile tile = null;
-
-        List<int> neighbours = new List<int>();
-
         for (int i = 0; i < NeighbourPositions.Count; i++)
         {
-            tile = WorldGeneration.GetTile(chunk, location + NeighbourPositions[i]);
-            neighbours.Add(tile == null ? 0 : 1);
+            Tile tile = WorldGeneration.GetTile(chunk, location + NeighbourPositions[i]);
+            Neighbours[i] = (tile == null ? TilingRule.Neighbour.NoTile : TilingRule.Neighbour.TilePresent);
         }
 
-        return neighbours;
+        return;
     }
 
     public TileData GetTileData(Chunk chunk, Vector3Int location)
     {
-        Neighbours = GetNeighbours(chunk, location);
+        GetNeighbours(chunk, location);
 
         foreach (var rule in Rules)
         {
@@ -51,26 +47,56 @@ public class RuleTileData : TileData, IRuleTile
 
         return this;
     }
+
+    private void OnValidate()
+    {
+        foreach (var rule in Rules)
+        {
+            rule.OnValidate();
+        }
+    }
 }
 
 [System.Serializable]
 public class TilingRule
 {
+    [HideInInspector] public string ElementName; 
+
     public TileData tile;
 
     public List<int> NeighbourRules = new List<int>();
 
-    public bool CheckReturnTile(List<int> neighbours, out TileData newData)
+    public class Neighbour
     {
-        int minCount = Math.Min(neighbours.Count, NeighbourRules.Count);
+        public const int NoTile = 0;
+        public const int TilePresent = 1;
+        public const int Ignore = 2;
+    }
+
+    public bool CheckReturnTile(int[] neighbours, out TileData newData)
+    {
+        int minCount = Math.Min(neighbours.Length, NeighbourRules.Count);
 
         for (int i = 0; i < minCount; i++)
         {
+            if (NeighbourRules[i] == Neighbour.Ignore) continue;
+
             newData = null;
             if (neighbours[i] != NeighbourRules[i]) { return false; }
         }
 
         newData = tile;
         return true;
+    }
+
+    public class NeighbourRule
+    {
+        [HideInInspector] public string Name;
+        public int Rule;
+    }
+
+    public void OnValidate()
+    {
+        ElementName = tile.TileId;
     }
 }
