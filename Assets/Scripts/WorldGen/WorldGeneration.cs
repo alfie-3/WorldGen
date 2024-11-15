@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class WorldGeneration : MonoBehaviour
@@ -58,8 +59,8 @@ public class WorldGeneration : MonoBehaviour
             Destroy(child.gameObject);
         ChunkDict.Clear();
 
-        noiseGenerator.Seed = (int)System.DateTime.Now.Ticks;
-        noiseIsland.Seed = (int)System.DateTime.Now.Ticks;
+        noiseGenerator.Seed = (int)DateTime.Now.Ticks;
+        noiseIsland.Seed = (int)DateTime.Now.Ticks;
 
         await GenerateChunks();
     }
@@ -72,20 +73,22 @@ public class WorldGeneration : MonoBehaviour
         {
             for (int y = playerChunkLoc.y - ChunkGenerationRange; y < playerChunkLoc.y + ChunkGenerationRange; y++)
             {
-                if (IsChunkGenerated(new(x, y))) { continue; }
+                Vector2Int chunkLoc = new Vector2Int(x, y);
 
-                Chunk newChunk = await UniTask.RunOnThreadPool(() => GenerateChunk(new(x, y)), cancellationToken: tokenSource.Token);
-                ChunkDict.TryAdd(new(x, y), newChunk);
+                if (IsChunkGenerated(chunkLoc)) { continue; }
+
+                Chunk newChunk = await UniTask.RunOnThreadPool(() => GenerateChunk(chunkLoc), cancellationToken: tokenSource.Token);
+                ChunkDict.TryAdd(chunkLoc, newChunk);
 
                 foreach (Tile tile in newChunk.Tiles.Values)
                 {
                     if (tile.tileData is IRuleTile iRuleTile)
                     {
-                        tile.tileData = iRuleTile.GetTileData(newChunk, tile.tileLocation);
+                        tile.tileData = iRuleTile.GetTileData(tile.tileLocation);
                     }
                 }
 
-                chunkReady.Invoke(new(x, y));
+                chunkReady.Invoke(chunkLoc);
             }
         }
     }
@@ -114,25 +117,33 @@ public class WorldGeneration : MonoBehaviour
         return newChunk;
     }
 
-    public static Chunk GetChunk(Vector2Int chunkCoordinate)
+    public static bool GetChunk(Vector2Int chunkCoordinate, out Chunk returnChunk)
     {
         if (ChunkDict.TryGetValue(chunkCoordinate, out Chunk chunk))
         {
-            return chunk;
+            returnChunk = chunk;
+            return true;
         }
-        return null;
+
+        returnChunk = null;
+        return false;
     }
 
-    public static Tile GetTile(Chunk chunk, Vector3Int tileCoordinate, CoordinateMode coordMode = CoordinateMode.Global)
+    public static Tile GetTile(Vector3Int tileCoordinate)
     {
-        if (chunk.GetTile(tileCoordinate, out Tile tile))
+        Vector2Int chunkLoc = new Vector2Int(RoundFloatToInt(tileCoordinate.x, CHUNK_SIZE), RoundFloatToInt(tileCoordinate.z, CHUNK_SIZE));
+
+        if (GetChunk(chunkLoc, out Chunk returnChunk))
         {
-            return tile;
+            if (returnChunk.GetTile(tileCoordinate, out Tile tile))
+            {
+                return tile;
+            }
+
+            else return null;
         }
-        else
-        {
-            return null;
-        }
+
+        return null;
     }
 
     public bool IsChunkGenerated(Vector2Int chunkCoordinate)
@@ -159,7 +170,16 @@ public class WorldGeneration : MonoBehaviour
 
     public Vector2Int GetPlayerChunkLocation()
     {
-        return Vector2Int.RoundToInt(new(PlayerTransform.position.x, PlayerTransform.position.z)) / CHUNK_SIZE;
+        return Vector2Int.FloorToInt(new Vector2(PlayerTransform.position.x, PlayerTransform.position.z) / CHUNK_SIZE);
+    }
+
+    public static int RoundFloatToInt(int a, int b)
+    {
+        int div = a / b;
+        if (a % b != 0)
+            div++;
+
+        return div;
     }
 
     public void CreateTiles(Chunk chunk)

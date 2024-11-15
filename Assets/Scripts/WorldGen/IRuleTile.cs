@@ -4,5 +4,5 @@ using UnityEngine;
 
 public interface IRuleTile
 {
-    public TileData GetTileData(Chunk chunk, Vector3Int location);
+    public TileData GetTileData(Vector3Int location);
 }

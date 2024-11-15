@@ -1,9 +1,9 @@
 {
   "dependencies": {
     "com.shniqq.fast-noise-lite": {
-      "version": "file:C:/Users/trued/OneDrive - University of Gloucestershire/Year3/PersonalPortfolio/Plugin/FastNoiseLite-Unity-master/FastNoiseLite-Unity-master",
+      "version": "file:FastNoiseLite-Unity",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {}
     },
     "com.unity.2d.animation": {

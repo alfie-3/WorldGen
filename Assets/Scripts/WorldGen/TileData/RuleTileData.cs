@@ -8,7 +8,7 @@ public class RuleTileData : TileData, IRuleTile
 {
     public List<TilingRule> Rules;
 
-    int[] Neighbours = new int[8];
+    public int[] Neighbours = new int[8];
     public static List<Vector3Int> NeighbourPositions = new List<Vector3Int>()
     {
                 new Vector3Int(-1, 0, 1),
@@ -22,20 +22,20 @@ public class RuleTileData : TileData, IRuleTile
     };
 
 
-    public void GetNeighbours(Chunk chunk, Vector3Int location)
+    public void GetNeighbours(Vector3Int location)
     {
         for (int i = 0; i < NeighbourPositions.Count; i++)
         {
-            Tile tile = WorldGeneration.GetTile(chunk, location + NeighbourPositions[i]);
+            Tile tile = WorldGeneration.GetTile(location + NeighbourPositions[i]);
             Neighbours[i] = (tile == null ? TilingRule.Neighbour.NoTile : TilingRule.Neighbour.TilePresent);
         }
 
         return;
     }
 
-    public TileData GetTileData(Chunk chunk, Vector3Int location)
+    public TileData GetTileData(Vector3Int location)
     {
-        GetNeighbours(chunk, location);
+        GetNeighbours(location);
 
         foreach (var rule in Rules)
         {
@@ -87,12 +87,6 @@ public class TilingRule
 
         newData = tile;
         return true;
-    }
-
-    public class NeighbourRule
-    {
-        [HideInInspector] public string Name;
-        public int Rule;
     }
 
     public void OnValidate()
