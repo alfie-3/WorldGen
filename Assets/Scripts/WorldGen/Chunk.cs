@@ -33,10 +33,14 @@ public class Chunk
         {
             Tiles[coordinate] = new(tileData, coordinate);
         }
+
+        Tiles[coordinate].RefreshTile();
     }
 
     public bool GetTile(Vector3Int coordinate, out Tile returnTile)
     {
+        returnTile = null;
+
         if (Tiles.TryGetValue(coordinate, out Tile tile))
         {
             returnTile = tile;
@@ -44,7 +48,6 @@ public class Chunk
         }
         else
         {
-            returnTile = null;
             return false;
         }
     }

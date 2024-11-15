@@ -5,6 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class Tile
 {
+    public TileData BaseTileData {  get; private set; }
     public TileData tileData;
 
     //Tile location is GLOBAL not local to the chunk
@@ -12,7 +13,12 @@ public class Tile
 
     public Tile(TileData tileData, Vector3Int location)
     {
-        this.tileData = tileData;    
+        BaseTileData = tileData;    
         tileLocation = location;
+    }
+
+    public void RefreshTile()
+    {
+        tileData = BaseTileData.GetTileData(tileLocation);
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 using static UnityEngine.RuleTile.TilingRuleOutput;
 
 [CreateAssetMenu(fileName = "New Rule Tile", menuName = "Tiles/New Rule Tile Data", order = 1)]
-public class RuleTileData : TileData, IRuleTile
+public class RuleTileData : TileData
 {
     public List<TilingRule> Rules;
 
@@ -26,16 +26,17 @@ public class RuleTileData : TileData, IRuleTile
     {
         for (int i = 0; i < NeighbourPositions.Count; i++)
         {
-            Tile tile = WorldGeneration.GetTile(location + NeighbourPositions[i]);
-            Neighbours[i] = (tile == null ? TilingRule.Neighbour.NoTile : TilingRule.Neighbour.TilePresent);
+            if (WorldGeneration.GetTile(location + NeighbourPositions[i], out Tile tile))
+            {
+                Neighbours[i] = TilingRule.Neighbour.TilePresent;
+            }
+            else Neighbours[i] = TilingRule.Neighbour.NoTile;
         }
-
-        return;
     }
 
-    public TileData GetTileData(Vector3Int location)
+    public override TileData GetTileData(Vector3Int position)
     {
-        GetNeighbours(location);
+        GetNeighbours(position);
 
         foreach (var rule in Rules)
         {
