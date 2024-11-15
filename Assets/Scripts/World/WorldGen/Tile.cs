@@ -15,6 +15,13 @@ public class Tile
     {
         BaseTileData = tileData;    
         tileLocation = location;
+        RefreshTile();
+    }
+
+    public void SetTile(TileData tileData)
+    {
+        BaseTileData = tileData;
+        RefreshTile();
     }
 
     public void RefreshTile()

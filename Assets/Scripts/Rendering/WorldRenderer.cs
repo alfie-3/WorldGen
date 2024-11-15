@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class TileBatch
 {
@@ -11,7 +9,7 @@ public class TileBatch
     public Matrix4x4[] GetMatricies()
     {
         if (matriciesArray != null) return matriciesArray;
-        
+
         matriciesArray = matricies.ToArray();
         matricies = null;
 
@@ -29,7 +27,6 @@ public class TileBatch
 public class WorldRenderer : MonoBehaviour
 {
     public WorldGeneration WorldGeneration;
-    public string Filter;
 
     Dictionary<Vector2Int, Dictionary<string, TileBatch>> chunkBatchTiles = new();
 
@@ -51,25 +48,27 @@ public class WorldRenderer : MonoBehaviour
             chunkBatchTiles[chunkKey].Clear();
         }
 
-        foreach (KeyValuePair<Vector3Int, Tile> tile in WorldGeneration.ChunkDict[chunkKey].Tiles)
+        lock (WorldGeneration.ChunkDict)
         {
-            TileData data = tile.Value.tileData;
+            foreach (KeyValuePair<Vector3Int, Tile> tile in WorldGeneration.ChunkDict[chunkKey].Tiles)
+            {
+                TileData data = tile.Value.tileData;
 
-            chunkBatchTiles[chunkKey].TryAdd(data.TileId, new(data));
-            chunkBatchTiles[chunkKey][data.TileId].matricies.Add(Matrix4x4.Translate(tile.Value.tileLocation));
+                chunkBatchTiles[chunkKey].TryAdd(data.TileId, new(data));
+                chunkBatchTiles[chunkKey][data.TileId].matricies.Add(Matrix4x4.Translate(tile.Value.tileLocation));
+            }
         }
+
     }
 
     private void LateUpdate()
     {
         foreach (KeyValuePair<Vector2Int, Dictionary<string, TileBatch>> chunkBatches in chunkBatchTiles)
         {
-            if (Vector2Int.Distance(chunkBatches.Key, WorldGeneration.GetPlayerChunkLocation()) > WorldGeneration.ChunkGenerationRange + 1) { continue; }   
+            if (Vector2Int.Distance(chunkBatches.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
 
             foreach (KeyValuePair<string, TileBatch> chunkBatch in chunkBatches.Value)
             {
-                if (chunkBatch.Key == Filter) continue;
-
                 RenderParams rp = new RenderParams(chunkBatch.Value.tileData.TileMaterial);
                 Graphics.RenderMeshInstanced(rp, chunkBatch.Value.tileData.TileMesh, 0, chunkBatch.Value.GetMatricies());
             }

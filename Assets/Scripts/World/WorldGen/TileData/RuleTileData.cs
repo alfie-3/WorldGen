@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static TilingRule;
 using static UnityEngine.RuleTile.TilingRuleOutput;
 
 [CreateAssetMenu(fileName = "New Rule Tile", menuName = "Tiles/New Rule Tile Data", order = 1)]
@@ -8,8 +9,7 @@ public class RuleTileData : TileData
 {
     public List<TilingRule> Rules;
 
-    public int[] Neighbours = new int[8];
-    public static List<Vector3Int> NeighbourPositions = new List<Vector3Int>()
+    public static readonly Vector3Int[] NeighbourPositions =
     {
                 new Vector3Int(-1, 0, 1),
                 new Vector3Int(0, 0, 1),
@@ -22,25 +22,29 @@ public class RuleTileData : TileData
     };
 
 
-    public void GetNeighbours(Vector3Int location)
+    public int[] GetNeighbours(Vector3Int location)
     {
-        for (int i = 0; i < NeighbourPositions.Count; i++)
+        int[] neighbours = new int[NeighbourPositions.Length];
+        
+        for (int i = 0; i < NeighbourPositions.Length; i++)
         {
-            if (WorldGeneration.GetTile(location + NeighbourPositions[i], out Tile tile))
+            if (WorldUtils.GetTile(location + NeighbourPositions[i], out Tile tile))
             {
-                Neighbours[i] = TilingRule.Neighbour.TilePresent;
+                neighbours[i] = TilingRule.Neighbour.TilePresent;
             }
-            else Neighbours[i] = TilingRule.Neighbour.NoTile;
+            else neighbours[i] = TilingRule.Neighbour.NoTile;
         }
+
+        return neighbours;
     }
 
     public override TileData GetTileData(Vector3Int position)
     {
-        GetNeighbours(position);
+        int[] neighbours = GetNeighbours(position);
 
         foreach (var rule in Rules)
         {
-            if (rule.CheckReturnTile(Neighbours, out TileData data))
+            if (rule.CheckReturnTile(neighbours, out TileData data))
             {
                 return data;
             }

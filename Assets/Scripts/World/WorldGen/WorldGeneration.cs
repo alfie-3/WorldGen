@@ -1,10 +1,9 @@
 using Cysharp.Threading.Tasks;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEditor.FilePathAttribute;
 
 public class WorldGeneration : MonoBehaviour
 {
@@ -22,12 +21,13 @@ public class WorldGeneration : MonoBehaviour
     public static int ChunkGenerationRange = 5;
     public static int ChunkReleaseRange = 20;
 
-    public static Dictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
+    public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
     public Action<Vector2Int> chunkReady;
     public Action<Vector2Int> chunkRemoved;
+    public Action<Vector2Int> resfreshChunk;
 
-    Transform PlayerTransform;
+    public static Transform PlayerTransform;
 
     public enum CoordinateMode
     {
@@ -68,7 +68,7 @@ public class WorldGeneration : MonoBehaviour
 
     async UniTask GenerateChunks()
     {
-        Vector2Int playerChunkLoc = GetPlayerChunkLocation();
+        Vector2Int playerChunkLoc = WorldUtils.GetChunkLocation(PlayerTransform.position);
 
         for (int x = playerChunkLoc.x - ChunkGenerationRange; x < playerChunkLoc.x + ChunkGenerationRange; x++)
         {
@@ -76,7 +76,7 @@ public class WorldGeneration : MonoBehaviour
             {
                 Vector2Int chunkLoc = new Vector2Int(x, y);
 
-                if (IsChunkGenerated(chunkLoc)) { continue; }
+                if (WorldUtils.IsChunkGenerated(chunkLoc)) { continue; }
 
                 Chunk newChunk = CreateChunk(chunkLoc);
                 await UniTask.RunOnThreadPool(() => GenerateChunk(newChunk), cancellationToken: tokenSource.Token);
@@ -110,69 +110,16 @@ public class WorldGeneration : MonoBehaviour
         return newChunk;
     }
 
-    public static bool GetChunk(Vector2Int chunkCoordinate, out Chunk returnChunk)
-    {
-        if (ChunkDict.TryGetValue(chunkCoordinate, out Chunk chunk))
-        {
-            returnChunk = chunk;
-            return true;
-        }
-
-        returnChunk = null;
-        return false;
-    }
-
-    public static bool GetTile(Vector3Int tileCoordinate, out Tile returnTile)
-    {
-        returnTile = null;
-        Vector2Int chunkLoc = Vector2Int.zero;
-        chunkLoc = new Vector2Int(RoundFloatToInt(tileCoordinate.x, CHUNK_SIZE), RoundFloatToInt(tileCoordinate.z, CHUNK_SIZE));
-
-        if (GetChunk(chunkLoc, out Chunk returnChunk))
-        { 
-            if (returnChunk.GetTile(tileCoordinate, out Tile tile))
-            {
-                returnTile = tile;
-                return true;
-            }
-
-            else return false;
-        }
-
-        return false;
-    }
-
-    public bool IsChunkGenerated(Vector2Int chunkCoordinate)
-    {
-        if (ChunkDict.TryGetValue(chunkCoordinate, out Chunk chunk))
-        {
-            return chunk.ChunkStatus == Chunk.CHUNK_STATUS.GENERATED;
-        }
-        else
-            return false;
-    }
-
     public void CheckClearChunks()
     {
         foreach (Vector2Int loc in ChunkDict.Keys)
         {
-            if (Vector2Int.Distance(GetPlayerChunkLocation(), ChunkDict[loc].ChunkLocation) > ChunkReleaseRange)
+            if (Vector2Int.Distance(WorldUtils.GetChunkLocation(PlayerTransform.position), ChunkDict[loc].ChunkLocation) > ChunkReleaseRange)
             {
-                ChunkDict.Remove(loc);
+                ChunkDict.Remove(loc, out Chunk value);
                 chunkRemoved.Invoke(loc);
             }
         }
-    }
-
-    public Vector2Int GetPlayerChunkLocation()
-    {
-        return Vector2Int.FloorToInt(new Vector2(PlayerTransform.position.x, PlayerTransform.position.z) / CHUNK_SIZE);
-    }
-
-    public static int RoundFloatToInt(int a, int b)
-    {
-        int res = a / b;
-        return (a < 0 && a != b * res) ? res - 1 : res;
     }
 
     public void CreateTiles(Chunk chunk)
