@@ -389,6 +389,10 @@ PrefabInstance:
       propertyPath: UiCam
       value: 
       objectReference: {fileID: 519420031}
+    - target: {fileID: 2227393123558959136, guid: 7d284ac83419527439ed6421789939fa, type: 3}
+      propertyPath: currentTileData
+      value: 
+      objectReference: {fileID: 11400000, guid: 693a9d0160d78594eb70695e6b153313, type: 2}
     - target: {fileID: 4235671179490301007, guid: 7d284ac83419527439ed6421789939fa, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -582,7 +586,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1286674111}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb668be202717bb4587eab77d3b91ed2, type: 3}
+  m_Script: {fileID: 11500000, guid: 36e1ea540db01ab40b892550c6086506, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1360302150

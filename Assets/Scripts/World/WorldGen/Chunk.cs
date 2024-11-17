@@ -31,8 +31,6 @@ public class Chunk
         {
             Tiles[coordinate].SetTile(tileData);
         }
-
-        //UpdateAdjacentTiles(coordinate);
     }
 
     public bool GetTile(Vector3Int coordinate, out Tile returnTile)

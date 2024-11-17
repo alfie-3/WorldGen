@@ -12,6 +12,8 @@ public class TileInfoTooltip : MonoBehaviour
     [SerializeField] RectTransform backgroundRectTransform;
     [SerializeField] Canvas canvas;
 
+    [SerializeField] TileData currentTileData;
+
     private void Start()
     {
         HideTooltip();
@@ -52,6 +54,20 @@ public class TileInfoTooltip : MonoBehaviour
                     WorldManagement.UpdateAdjacentTiles(tile.tileLocation);
                     tile.RefreshTile();
                 }
+            }
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (currentTileData == null) return;
+
+            Vector3 mousePos = Mouse.current.position.ReadValue();
+            RaycastHit hit;
+            Ray ray = Camera.main.ScreenPointToRay(mousePos);
+
+            if (Physics.Raycast(ray, out hit))
+            {
+                WorldManagement.SetTile(new((int)(hit.point.x), 0, (int)hit.point.z), currentTileData);
             }
         }
     }

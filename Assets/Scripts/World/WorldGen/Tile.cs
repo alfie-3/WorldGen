@@ -25,9 +25,7 @@ public class Tile
 
     public void RefreshTile()
     {
-        TileData oldTile = tileData;
-        
         WorldManagement.SetTile(tileLocation, BaseTileData);
-        WorldRenderer.UpdateTile(tileLocation, tileData, oldTile);
+        WorldMeshBuilder.SetChunkDirty(WorldUtils.GetChunkLocation(tileLocation));
     }
 }

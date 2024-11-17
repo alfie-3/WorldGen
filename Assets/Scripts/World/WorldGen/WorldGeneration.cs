@@ -25,7 +25,8 @@ public class WorldGeneration : MonoBehaviour
 
     public static Transform PlayerTransform;
 
-    public static Action<Vector2Int> ChunkReady;
+    public static Action<Vector2Int> ChunkReady = delegate { };
+    public static Action<Vector2Int> ChunkReleased = delegate { };
 
     public enum CoordinateMode
     {
@@ -48,7 +49,7 @@ public class WorldGeneration : MonoBehaviour
     {
         await GenerateChunks();
 
-        CheckClearChunks();
+        CheckReleaseChunks();
     }
 
     [ContextMenu("Regenerate")]
@@ -98,7 +99,7 @@ public class WorldGeneration : MonoBehaviour
         {
             tile.RefreshTile();
 
-            if (tile.tileLocation.x % CHUNK_SIZE == 0 || tile.tileLocation.z % CHUNK_SIZE == 0)
+            if (tile.tileLocation.x % CHUNK_SIZE <= 2  || tile.tileLocation.z % CHUNK_SIZE <= 2)
             {
                 WorldManagement.UpdateAdjacentTiles(tile.tileLocation);
             }
@@ -119,13 +120,14 @@ public class WorldGeneration : MonoBehaviour
         return ChunkDict.TryAdd(chunkLocation, newChunk);
     }
 
-    public void CheckClearChunks()
+    public void CheckReleaseChunks()
     {
         foreach (Vector2Int loc in ChunkDict.Keys)
         {
             if (Vector2Int.Distance(WorldUtils.GetChunkLocation(PlayerTransform.position), ChunkDict[loc].ChunkLocation) > ChunkReleaseRange)
             {
                 ChunkDict.Remove(loc, out Chunk value);
+                ChunkReleased.Invoke(loc);
             }
         }
     }
