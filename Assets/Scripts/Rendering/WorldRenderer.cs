@@ -1,17 +1,25 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 public class TileBatch
 {
     public List<Matrix4x4> matricies = new();
+
     public Matrix4x4[] matriciesArray;
+
+    public bool dirty = true;
 
     public Matrix4x4[] GetMatricies()
     {
-        if (matriciesArray != null) return matriciesArray;
+        if (!dirty) return matriciesArray;
 
-        matriciesArray = matricies.ToArray();
-        matricies = null;
+        lock (matricies)
+        matriciesArray = matricies.AsReadOnly().ToArray();
+
+        dirty = false;
 
         return matriciesArray;
     }
@@ -26,19 +34,11 @@ public class TileBatch
 
 public class WorldRenderer : MonoBehaviour
 {
-    public WorldGeneration WorldGeneration;
-
-    Dictionary<Vector2Int, Dictionary<string, TileBatch>> chunkBatchTiles = new();
+   static ConcurrentDictionary<Vector2Int, ConcurrentDictionary<string, TileBatch>> chunkBatchTiles = new();
 
     private void OnEnable()
     {
-        WorldGeneration.chunkReady += BatchTerrain;
-        WorldGeneration.chunkRemoved += RemoveChunk;
-    }
-
-    private void RemoveChunk(Vector2Int loc)
-    {
-        chunkBatchTiles.Remove(loc);
+        WorldGeneration.ChunkReady += BatchTerrain;
     }
 
     private void BatchTerrain(Vector2Int chunkKey)
@@ -48,22 +48,41 @@ public class WorldRenderer : MonoBehaviour
             chunkBatchTiles[chunkKey].Clear();
         }
 
-        lock (WorldGeneration.ChunkDict)
+        foreach (KeyValuePair<Vector3Int, Tile> tile in WorldGeneration.ChunkDict[chunkKey].Tiles)
         {
-            foreach (KeyValuePair<Vector3Int, Tile> tile in WorldGeneration.ChunkDict[chunkKey].Tiles)
-            {
-                TileData data = tile.Value.tileData;
+            TileData data = tile.Value.tileData;
 
-                chunkBatchTiles[chunkKey].TryAdd(data.TileId, new(data));
-                chunkBatchTiles[chunkKey][data.TileId].matricies.Add(Matrix4x4.Translate(tile.Value.tileLocation));
+            chunkBatchTiles[chunkKey].TryAdd(data.TileId, new(data));
+            chunkBatchTiles[chunkKey][data.TileId].matricies.Add(Matrix4x4.Translate(tile.Value.tileLocation));
+        }
+    }
+
+    public static void UpdateTile(Vector3Int tileLocation, TileData newTildData, TileData oldTileData)
+    {
+        Vector2Int chunkLoc = WorldUtils.GetChunkLocation(tileLocation);
+
+        if (oldTileData != null) if (newTildData.TileId == oldTileData.TileId) return;
+
+        if (chunkBatchTiles.TryGetValue(chunkLoc, out var tileBatches))
+        {
+            tileBatches.TryAdd(newTildData.TileId, new(newTildData));
+            tileBatches[newTildData.TileId].matricies.Add(Matrix4x4.Translate(tileLocation));
+            tileBatches[newTildData.TileId].dirty = true;
+
+            if (oldTileData == null) { return; }
+
+            if (tileBatches.TryGetValue(oldTileData.TileId, out TileBatch value))
+            {
+                lock (value.matricies) value.matricies.Remove(Matrix4x4.Translate(tileLocation));
+                if (value.matricies.Count == 0) tileBatches.TryRemove(oldTileData.TileId, out TileBatch poo);
+                value.dirty = true;
             }
         }
-
     }
 
     private void LateUpdate()
     {
-        foreach (KeyValuePair<Vector2Int, Dictionary<string, TileBatch>> chunkBatches in chunkBatchTiles)
+        foreach (KeyValuePair<Vector2Int, ConcurrentDictionary<string, TileBatch>> chunkBatches in chunkBatchTiles)
         {
             if (Vector2Int.Distance(chunkBatches.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
 
@@ -77,7 +96,6 @@ public class WorldRenderer : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        if (WorldGeneration == null) return;
         if (WorldGeneration.ChunkDict == null) return;
 
         foreach (KeyValuePair<Vector2Int, Chunk> chunk in WorldGeneration.ChunkDict)
@@ -100,7 +118,8 @@ public class WorldRenderer : MonoBehaviour
                     break;
             } //Change chunk boundary colour
 
-            Gizmos.DrawWireCube(new Vector3(chunk.Value.ChunkLocation.x * WorldGeneration.CHUNK_SIZE, 0, chunk.Value.ChunkLocation.y * WorldGeneration.CHUNK_SIZE), Vector3.one * WorldGeneration.CHUNK_SIZE);
+            Gizmos.DrawWireCube(new Vector3(chunk.Value.ChunkLocation.x * WorldGeneration.CHUNK_SIZE - 0.5f, 0, chunk.Value.ChunkLocation.y * WorldGeneration.CHUNK_SIZE - 0.5f), Vector3.one * WorldGeneration.CHUNK_SIZE);
+            Handles.Label(new Vector3(chunk.Value.ChunkLocation.x * WorldGeneration.CHUNK_SIZE, 0, chunk.Value.ChunkLocation.y * WorldGeneration.CHUNK_SIZE), chunk.Value.ChunkLocation.ToString());
         }
     }
 }

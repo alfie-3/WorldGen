@@ -15,17 +15,19 @@ public class Tile
     {
         BaseTileData = tileData;    
         tileLocation = location;
-        RefreshTile();
     }
 
     public void SetTile(TileData tileData)
     {
         BaseTileData = tileData;
-        RefreshTile();
+        this.tileData = BaseTileData.GetTileData(tileLocation);
     }
 
     public void RefreshTile()
     {
-        tileData = BaseTileData.GetTileData(tileLocation);
+        TileData oldTile = tileData;
+        
+        WorldManagement.SetTile(tileLocation, BaseTileData);
+        WorldRenderer.UpdateTile(tileLocation, tileData, oldTile);
     }
 }

@@ -6,9 +6,8 @@ using UnityEngine;
 public class Chunk
 {
     public Vector2Int ChunkLocation { get; private set; }
-    public Vector2Int ChunkGlobalLocation => ChunkLocation * WorldGeneration.CHUNK_SIZE;
+
     public ConcurrentDictionary<Vector3Int, Tile> Tiles = new();
-    public Mesh ChunkMesh;
 
     public enum CHUNK_STATUS
     {
@@ -28,16 +27,12 @@ public class Chunk
 
     public void SetTile(TileData tileData, Vector3Int coordinate)
     {
-        if (!Tiles.TryAdd(coordinate, new(tileData, coordinate)))
+        if (Tiles.TryAdd(coordinate, new(tileData, coordinate)))
         {
             Tiles[coordinate].SetTile(tileData);
         }
-        else
-        {
-            Tiles[coordinate].RefreshTile();
-        }
 
-        UpdateAdjacentTiles(coordinate);
+        //UpdateAdjacentTiles(coordinate);
     }
 
     public bool GetTile(Vector3Int coordinate, out Tile returnTile)
@@ -51,16 +46,5 @@ public class Chunk
 
         returnTile = null;
         return false;
-    }
-
-    public void UpdateAdjacentTiles(Vector3Int coordinate)
-    {
-        for (int i = 0; i < RuleTileData.NeighbourPositions.Length; i++)
-        {
-            if (WorldUtils.GetTile(coordinate + RuleTileData.NeighbourPositions[i], out Tile tile))
-            {
-                tile.RefreshTile();
-            }
-        }
     }
 }

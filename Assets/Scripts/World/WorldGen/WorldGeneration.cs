@@ -23,11 +23,9 @@ public class WorldGeneration : MonoBehaviour
 
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
-    public Action<Vector2Int> chunkReady;
-    public Action<Vector2Int> chunkRemoved;
-    public Action<Vector2Int> resfreshChunk;
-
     public static Transform PlayerTransform;
+
+    public static Action<Vector2Int> ChunkReady;
 
     public enum CoordinateMode
     {
@@ -78,11 +76,11 @@ public class WorldGeneration : MonoBehaviour
 
                 if (WorldUtils.IsChunkGenerated(chunkLoc)) { continue; }
 
-                Chunk newChunk = CreateChunk(chunkLoc);
-                await UniTask.RunOnThreadPool(() => GenerateChunk(newChunk), cancellationToken: tokenSource.Token);
-                ChunkDict.TryAdd(chunkLoc, newChunk);
-
-                chunkReady.Invoke(chunkLoc);
+                if (CreateChunk(chunkLoc, out Chunk newChunk))
+                {
+                    await UniTask.RunOnThreadPool(() => GenerateChunk(newChunk), cancellationToken: tokenSource.Token);
+                    ChunkReady.Invoke(chunkLoc);
+                }
             }
         }
     }
@@ -95,19 +93,30 @@ public class WorldGeneration : MonoBehaviour
         //Chunk is finished
         chunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATED;
 
+        //Refreshes all tiles to enforce rules
+        foreach (Tile tile in chunk.Tiles.Values)
+        {
+            tile.RefreshTile();
+
+            if (tile.tileLocation.x % CHUNK_SIZE == 0 || tile.tileLocation.z % CHUNK_SIZE == 0)
+            {
+                WorldManagement.UpdateAdjacentTiles(tile.tileLocation);
+            }
+        }
+
         return chunk;
     }
 
-    public Chunk CreateChunk(Vector2Int chunkLocation)
+    public bool CreateChunk(Vector2Int chunkLocation, out Chunk chunk)
     {
         Chunk newChunk = new(chunkLocation)
         {
             ChunkStatus = Chunk.CHUNK_STATUS.GENERATING
         };
 
-        ChunkDict.TryAdd(chunkLocation, newChunk);
+        chunk = newChunk;
 
-        return newChunk;
+        return ChunkDict.TryAdd(chunkLocation, newChunk);
     }
 
     public void CheckClearChunks()
@@ -117,7 +126,6 @@ public class WorldGeneration : MonoBehaviour
             if (Vector2Int.Distance(WorldUtils.GetChunkLocation(PlayerTransform.position), ChunkDict[loc].ChunkLocation) > ChunkReleaseRange)
             {
                 ChunkDict.Remove(loc, out Chunk value);
-                chunkRemoved.Invoke(loc);
             }
         }
     }
