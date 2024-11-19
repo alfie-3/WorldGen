@@ -31,7 +31,7 @@ public class TileInfoTooltip : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit))
         {
-            if (WorldUtils.GetTile(new((int)(hit.point.x), 0, (int)hit.point.z), out Tile tile))
+            if (WorldUtils.GetTile(WorldUtils.RoundVector3(new(hit.point.x, 0, hit.point.z)), out Tile tile))
             {
                 ShowTooltip($"{tile.tileData.TileId} \n  {tile.tileLocation} \n {WorldUtils.GetChunkLocation(tile.tileLocation)}");
             }
@@ -41,23 +41,7 @@ public class TileInfoTooltip : MonoBehaviour
 
     public void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            Vector3 mousePos = Mouse.current.position.ReadValue();
-            RaycastHit hit;
-            Ray ray = Camera.main.ScreenPointToRay(mousePos);
-
-            if (Physics.Raycast(ray, out hit))
-            {
-                if (WorldUtils.GetTile(new((int)(hit.point.x), 0, (int)hit.point.z), out Tile tile))
-                {
-                    WorldManagement.UpdateAdjacentTiles(tile.tileLocation);
-                    tile.RefreshTile();
-                }
-            }
-        }
-
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButton(0))
         {
             if (currentTileData == null) return;
 
@@ -67,7 +51,21 @@ public class TileInfoTooltip : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit))
             {
-                WorldManagement.SetTile(new((int)(hit.point.x), 0, (int)hit.point.z), currentTileData);
+                WorldManagement.RemoveTile(WorldUtils.RoundVector3(new(hit.point.x, 0, hit.point.z)));
+            }
+        }
+
+        if (Input.GetMouseButton(1))
+        {
+            if (currentTileData == null) return;
+
+            Vector3 mousePos = Mouse.current.position.ReadValue();
+            RaycastHit hit;
+            Ray ray = Camera.main.ScreenPointToRay(mousePos);
+
+            if (Physics.Raycast(ray, out hit))
+            {
+                WorldManagement.SetTile(WorldUtils.RoundVector3(new(hit.point.x, 0, hit.point.z)), currentTileData);
             }
         }
     }

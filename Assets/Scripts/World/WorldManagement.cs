@@ -17,6 +17,16 @@ public class WorldManagement : MonoBehaviour
         }
     }
 
+    public static void RemoveTile(Vector3Int tileLocation)
+    {
+        if (WorldUtils.GetChunk(WorldUtils.GetChunkLocation(tileLocation), out Chunk chunk))
+        {
+            chunk.ClearTile(tileLocation);
+            UpdateAdjacentTiles(tileLocation);
+            WorldMeshBuilder.SetChunkDirty(WorldUtils.GetChunkLocation(tileLocation));
+        }
+    }
+
     public static void CreateTile(Vector3Int coordinate, TileData tile)
     {
         if (WorldUtils.GetChunk(WorldUtils.GetChunkLocation(coordinate), out Chunk chunk))

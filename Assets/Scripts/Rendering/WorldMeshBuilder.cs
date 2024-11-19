@@ -11,6 +11,7 @@ public class WorldMeshBuilder : MonoBehaviour
     {
         public Mesh Mesh;
         public Material[] Materials;
+        public MeshCollider Collider;
 
         public bool Dirty = true;
 
@@ -40,7 +41,10 @@ public class WorldMeshBuilder : MonoBehaviour
 
     public void ReleaseChunk(Vector2Int chunkLoc)
     {
-        ChunkMeshes.TryRemove(chunkLoc, out ChunkMeshData chunkMeshData);
+        if (ChunkMeshes.TryRemove(chunkLoc, out ChunkMeshData chunkMeshData))
+        {
+            Destroy(chunkMeshData.Collider);
+        }
     }
 
     public ChunkMeshData GenerateChunkMeshData(Vector2Int chunkPos)
@@ -64,10 +68,26 @@ public class WorldMeshBuilder : MonoBehaviour
         Mesh mesh = new Mesh();
         mesh.CombineMeshes(instances.ToArray(), true, true);
 
+
+
         ChunkMeshData chunkMeshData = new(mesh, materials.ToArray());
         chunkMeshData.Dirty = false;
 
         return chunkMeshData;
+    }
+
+    public void GenerateCollider(Vector2Int chunkLoc)
+    {
+        if (ChunkMeshes[chunkLoc].Collider != null)
+        {
+            ChunkMeshes[chunkLoc].Collider.sharedMesh = ChunkMeshes[chunkLoc].Mesh;
+        }
+        else
+        {
+            MeshCollider collider = gameObject.AddComponent<MeshCollider>();
+            ChunkMeshes[chunkLoc].Collider = collider;
+            ChunkMeshes[chunkLoc].Collider.sharedMesh = ChunkMeshes[chunkLoc].Mesh;
+        }
     }
 
     public void UpdateChunkMesh(Vector2Int chunkLoc)
@@ -75,6 +95,7 @@ public class WorldMeshBuilder : MonoBehaviour
         if (ChunkMeshes.ContainsKey(chunkLoc))
         {
             ChunkMeshes[chunkLoc] = GenerateChunkMeshData(chunkLoc);
+            GenerateCollider(chunkLoc);
         }
         else
         {

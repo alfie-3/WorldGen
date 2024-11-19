@@ -50,6 +50,11 @@ public class WorldUtils : MonoBehaviour
         return Vector2Int.FloorToInt(new Vector2(location.x, location.z) / WorldGeneration.CHUNK_SIZE);
     }
 
+    public static Vector3Int RoundVector3(Vector3 location)
+    {
+        return new((int)location.x, (int)location.y, (int)location.z);
+    }
+
     public static int RoundFloatToInt(int a, int b)
     {
         int res = a / b;

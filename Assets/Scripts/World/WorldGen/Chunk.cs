@@ -33,6 +33,11 @@ public class Chunk
         }
     }
 
+    public void ClearTile(Vector3Int coordinate)
+    {
+        Tiles.TryRemove(coordinate, out Tile _);
+    }
+
     public bool GetTile(Vector3Int coordinate, out Tile returnTile)
     {
         if (Tiles.TryGetValue(coordinate, out Tile tile))
