@@ -21,6 +21,9 @@ public class WorldGeneration : MonoBehaviour
     public static int ChunkGenerationRange = 5;
     public static int ChunkReleaseRange = 20;
 
+    //Terrain Params
+    public const int maxTerrainHeight = 4;
+
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
     public static Transform PlayerTransform;
@@ -99,7 +102,7 @@ public class WorldGeneration : MonoBehaviour
         {
             tile.RefreshTile();
 
-            if (tile.tileLocation.x % CHUNK_SIZE <= 2  || tile.tileLocation.z % CHUNK_SIZE <= 2)
+            if (tile.tileLocation.x % CHUNK_SIZE <= 1  || tile.tileLocation.z % CHUNK_SIZE <= 1)
             {
                 WorldManagement.UpdateAdjacentTiles(tile.tileLocation);
             }
@@ -141,7 +144,14 @@ public class WorldGeneration : MonoBehaviour
             {
                 Vector2Int tileLocation = new Vector2Int(x + (chunk.ChunkLocation.x * CHUNK_SIZE), y + (chunk.ChunkLocation.y * CHUNK_SIZE));
                 int tileId = GetTileFromNoise(tileLocation.x, tileLocation.y);
-                CreateTile(chunk, tileId, new(tileLocation.x, 0, tileLocation.y));
+
+                float sample = SampleNoise(tileLocation.x, tileLocation.y);
+                int terrainHeight = Mathf.RoundToInt(sample * maxTerrainHeight);
+
+                for (int i = 0; i < terrainHeight; i++)
+                {
+                    CreateTile(chunk, tileId, new(tileLocation.x, i, tileLocation.y));
+                }
             }
         }
     }
@@ -160,6 +170,14 @@ public class WorldGeneration : MonoBehaviour
         sample *= 2;
 
         return Mathf.FloorToInt(sample);
+    }
+
+    private float SampleNoise(int x, int y)
+    {
+        float sample = noiseGenerator.GetNoiseClamped(new(x, y));
+        sample = Mathf.Pow(sample, noiseIsland.GetNoiseClamped(new(x, y)));
+
+        return sample;
     }
 
     private void OnApplicationQuit()
