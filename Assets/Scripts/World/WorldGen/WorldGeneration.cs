@@ -22,7 +22,7 @@ public class WorldGeneration : MonoBehaviour
     public static int ChunkReleaseRange = 20;
 
     //Terrain Params
-    public const int maxTerrainHeight = 4;
+    public const int MaxTerrainHeight = 4;
 
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
@@ -146,9 +146,9 @@ public class WorldGeneration : MonoBehaviour
                 int tileId = GetTileFromNoise(tileLocation.x, tileLocation.y);
 
                 float sample = SampleNoise(tileLocation.x, tileLocation.y);
-                int terrainHeight = Mathf.RoundToInt(sample * maxTerrainHeight);
+                int terrainHeight = Mathf.RoundToInt(sample * MaxTerrainHeight);
 
-                for (int i = 0; i < terrainHeight; i++)
+                for (int i = 0; i < terrainHeight - 1; i++)
                 {
                     CreateTile(chunk, tileId, new(tileLocation.x, i, tileLocation.y));
                 }

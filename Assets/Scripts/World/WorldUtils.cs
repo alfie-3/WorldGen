@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class WorldUtils : MonoBehaviour
@@ -43,6 +44,19 @@ public class WorldUtils : MonoBehaviour
         }
 
         return false;
+    }
+
+    public static Vector3Int GetTopTileLocation(Vector3Int sampleTileLoc)
+    {
+        for (int i = WorldGeneration.MaxTerrainHeight; i > 0; i--)
+        {
+            if (GetTile(new(sampleTileLoc.x, i, sampleTileLoc.z), out Tile tile))
+            {
+                return tile.tileLocation;
+            }
+        }
+
+        return sampleTileLoc;
     }
 
     public static Vector2Int GetChunkLocation(Vector3 location)

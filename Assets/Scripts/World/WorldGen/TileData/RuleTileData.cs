@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static TilingRule;
 using static UnityEngine.RuleTile.TilingRuleOutput;
 
@@ -67,9 +68,28 @@ public class TilingRule
 {
     [HideInInspector] public string ElementName; 
 
+    //Tile data to return
     public TileData tile;
 
+    //List of rules the neighbours will check against
     public List<int> NeighbourRules = new List<int>();
+
+    //Specifies the kinds of checks that a tile will undergo
+    //This is to reduce remaking the same kind of tile for different symmetries/rotations
+    public enum TILE_TRANSFORM
+    {
+        Static,
+        MirrorX,
+        MirrorY,
+        MirrorXY,
+        Rotated
+    }
+
+    //For Rotation Rule Tiles
+    public const int RotationAngle = 90;
+    public const int RotationCount = 360 / RotationAngle;
+
+    public TILE_TRANSFORM TileTransformation;
 
     public class Neighbour
     {
@@ -80,18 +100,74 @@ public class TilingRule
 
     public bool CheckReturnTile(int[] neighbours, out TileData newData)
     {
+        newData = tile;
+
+        switch (TileTransformation)
+        {
+            case(TILE_TRANSFORM.Static):
+                if (CheckTileMatches(neighbours)) return true;
+                break;
+
+            case(TILE_TRANSFORM.MirrorX):
+                if (CheckTileMatches(neighbours, true, false)) return true;
+                break;
+
+            case(TILE_TRANSFORM.MirrorY):
+                if (CheckTileMatches(neighbours, false, true)) return true;
+                break;
+
+            case(TILE_TRANSFORM.MirrorXY):
+                if (CheckTileMatches(neighbours, true, true)) return true;
+                if (CheckTileMatches(neighbours, true , false)) return true;
+                if (CheckTileMatches(neighbours, false, true)) return true;
+                break;
+
+            case (TILE_TRANSFORM.Rotated):
+                for (int angle = RotationAngle; angle < 360; angle += RotationAngle)
+                {
+                    if (CheckRotationalTileMatch(neighbours, angle)) return true;
+                }
+                break;
+        }
+
+        return false;
+    }
+
+    public bool CheckTileMatches(int[] neighbours, bool mirrorX = false, bool mirrorY = false)
+    {
         int minCount = Math.Min(neighbours.Length, NeighbourRules.Count);
 
         for (int i = 0; i < minCount; i++)
         {
             if (NeighbourRules[i] == Neighbour.Ignore) continue;
 
-            newData = null;
             if (neighbours[i] != NeighbourRules[i]) { return false; }
         }
 
-        newData = tile;
         return true;
+    }
+
+    public bool CheckRotationalTileMatch(int[] neighbours, int angle)
+    {
+        int minCount = Math.Min(neighbours.Length, NeighbourRules.Count);
+
+        for (int i = 0; i < minCount; i++)
+        {
+            if (NeighbourRules[i] == Neighbour.Ignore) continue;
+
+            if (neighbours[i] != NeighbourRules[i]) { return false; }
+        }
+
+        return true;
+    }
+
+    public Vector3Int GetMirroredPosition(Vector3Int position, bool mirrorX, bool mirrorY)
+    {
+        if (mirrorX)
+            position.x *= -1;
+        if (mirrorY)
+            position.y *= -1;
+        return position;
     }
 
     public void OnValidate()

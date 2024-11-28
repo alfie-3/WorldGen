@@ -1,15 +1,18 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class WorldManagement : MonoBehaviour
 {
-    public static void SetTile(Vector3Int tileLocation, TileData tileData)
+    public static void SetTile(Vector3Int tileLocation, TileData tileData, bool placeOnNextVerticalTile = false)
     {
         if (WorldUtils.GetTile(tileLocation, out Tile tile))
         {
-            tile.SetTile(tileData);
+            if (!placeOnNextVerticalTile)
+                tile.SetTile(tileData);
+            else
+            {
+                tileLocation.y++;
+                SetTile(tileLocation, tileData, false);
+            }
         }
         else
         {

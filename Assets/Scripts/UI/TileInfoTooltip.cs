@@ -14,6 +14,8 @@ public class TileInfoTooltip : MonoBehaviour
 
     [SerializeField] TileData currentTileData;
 
+    Vector3Int hitLoc;
+
     private void Start()
     {
         HideTooltip();
@@ -31,41 +33,52 @@ public class TileInfoTooltip : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit))
         {
-            if (WorldUtils.GetTile(WorldUtils.RoundVector3(new(hit.point.x, 0, hit.point.z)), out Tile tile))
+            Debug.DrawRay(ray.origin, ray.direction * 500, Color.green);
+
+            hitLoc = Vector3Int.RoundToInt(new(hit.point.x, 0, hit.point.z));
+
+            if (WorldUtils.GetTile(WorldUtils.GetTopTileLocation(hitLoc), out Tile tile))
             {
                 ShowTooltip($"{tile.tileData.TileId} \n  {tile.tileLocation} \n {WorldUtils.GetChunkLocation(tile.tileLocation)}");
             }
             else HideTooltip();
         }
+        else
+        {
+            Debug.DrawRay(ray.origin, ray.direction * 500, Color.red);
+            hitLoc = Vector3Int.zero;
+        }
     }
 
     public void Update()
     {
-        if (Input.GetMouseButton(0))
+        //Removing tiles using left mouse click
+        if (Input.GetMouseButtonDown(0))
         {
             if (currentTileData == null) return;
 
             Vector3 mousePos = Mouse.current.position.ReadValue();
-            RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(mousePos);
 
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.Raycast(ray, out RaycastHit hit))
             {
-                WorldManagement.RemoveTile(WorldUtils.RoundVector3(new(hit.point.x, 0, hit.point.z)));
+                Vector3Int roundedHit = Vector3Int.RoundToInt(new(hit.point.x, 0, hit.point.z));
+                WorldManagement.RemoveTile(WorldUtils.GetTopTileLocation(roundedHit));
             }
         }
 
-        if (Input.GetMouseButton(1))
+        //Placing tiles with right mouse click
+        if (Input.GetMouseButtonDown(1))
         {
             if (currentTileData == null) return;
 
             Vector3 mousePos = Mouse.current.position.ReadValue();
-            RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(mousePos);
 
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.Raycast(ray, out RaycastHit hit))
             {
-                WorldManagement.SetTile(WorldUtils.RoundVector3(new(hit.point.x, 0, hit.point.z)), currentTileData);
+                Vector3Int roundedHit = Vector3Int.RoundToInt(new(hit.point.x, 0, hit.point.z));
+                WorldManagement.SetTile(WorldUtils.GetTopTileLocation(roundedHit), currentTileData, true);
             }
         }
     }
@@ -87,5 +100,15 @@ public class TileInfoTooltip : MonoBehaviour
     public void HideTooltip()
     {
         canvas.enabled = false;
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (hitLoc != Vector3Int.zero)
+        {
+            Vector3 drawPos = WorldUtils.GetTopTileLocation(hitLoc);
+            drawPos.y += 0.5f;
+            Gizmos.DrawWireCube(drawPos, Vector3Int.one);
+        }
     }
 }
