@@ -11,6 +11,8 @@ public class Tile
     //Tile location is GLOBAL not local to the chunk
     public Vector3Int tileLocation;
 
+    public Matrix4x4 tileTransform = Matrix4x4.identity;
+
     public Tile(TileData tileData, Vector3Int location)
     {
         BaseTileData = tileData;    
@@ -20,7 +22,7 @@ public class Tile
     public void SetTile(TileData tileData)
     {
         BaseTileData = tileData;
-        this.tileData = BaseTileData.GetTileData(tileLocation);
+        this.tileData = BaseTileData.GetTileData(tileLocation, ref tileTransform);
     }
 
     public void RefreshTile()

@@ -39,7 +39,7 @@ public class RuleTileData : TileData
         return neighbours;
     }
 
-    public override TileData GetTileData(Vector3Int position)
+    public override TileData GetTileData(Vector3Int position, ref Matrix4x4 tileTransform)
     {
         int[] neighbours = GetNeighbours(position);
 
@@ -74,6 +74,23 @@ public class TilingRule
     //List of rules the neighbours will check against
     public List<int> NeighbourRules = new List<int>();
 
+    //IDK WHAT THIS IS YET
+    public Dictionary<Vector3Int, int> CachedNeighourRulesDict;
+    public Dictionary<Vector3Int, int> NeighbourRulesDict
+    {
+        get {
+
+            if (CachedNeighourRulesDict != null) return CachedNeighourRulesDict;
+
+            CachedNeighourRulesDict = new Dictionary<Vector3Int, int>();
+            for (int i = 0; i < RuleTileData.NeighbourPositions.Length; i++)
+            {
+                CachedNeighourRulesDict.Add(RuleTileData.NeighbourPositions[i], NeighbourRules[i]);
+            }
+            return CachedNeighourRulesDict;
+        }
+    }
+
     //Specifies the kinds of checks that a tile will undergo
     //This is to reduce remaking the same kind of tile for different symmetries/rotations
     public enum TILE_TRANSFORM
@@ -101,6 +118,7 @@ public class TilingRule
     public bool CheckReturnTile(int[] neighbours, out TileData newData)
     {
         newData = tile;
+
 
         switch (TileTransformation)
         {
@@ -153,12 +171,30 @@ public class TilingRule
 
         for (int i = 0; i < minCount; i++)
         {
-            if (NeighbourRules[i] == Neighbour.Ignore) continue;
+            int rotatedNeighbourValue = GetRotatedNeighbourRule(RuleTileData.NeighbourPositions[i], angle);
 
-            if (neighbours[i] != NeighbourRules[i]) { return false; }
+            if (rotatedNeighbourValue == Neighbour.Ignore) continue;
+
+            if (neighbours[i] != rotatedNeighbourValue) { return false; }
         }
 
         return true;
+    }
+
+    public int GetRotatedNeighbourRule(Vector3Int position, int rotation)
+    {
+        switch (rotation)
+        {
+            case 0:
+                return NeighbourRulesDict[position];
+            case 90:
+                return NeighbourRulesDict[new(position.z, position.y, -position.x)];
+            case 180:
+                return NeighbourRulesDict[new(-position.x, position.y, -position.z)];
+            case 270:
+                return NeighbourRulesDict[new(-position.z, position.y, position.x)];
+        }
+        return NeighbourRulesDict[position];
     }
 
     public Vector3Int GetMirroredPosition(Vector3Int position, bool mirrorX, bool mirrorY)
