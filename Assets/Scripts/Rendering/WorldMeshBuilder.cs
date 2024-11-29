@@ -73,20 +73,25 @@ public class WorldMeshBuilder : MonoBehaviour
 
         HashSet<Material> materials = new HashSet<Material>();
 
-        foreach (KeyValuePair<Vector3Int, Tile> tile in WorldGeneration.ChunkDict[chunkPos].Tiles)
+        foreach (Tile tile in WorldGeneration.ChunkDict[chunkPos].Tiles.Values)
         {
-            TileData data = tile.Value.tileData;
+            TileData data = tile.tileData;
 
-            instance.transform = Matrix4x4.Translate(tile.Value.tileLocation);
+            instance.transform = Matrix4x4.TRS(tile.tileLocation, tile.tileTransform.rotation, Vector3.one);
             instance.mesh = data.TileMesh;
 
             instances.Add(instance);
-            materials.Add(tile.Value.tileData.TileMaterial);
+
+            foreach (Material material in tile.tileData.TileMaterials)
+            {
+                materials.Add(material);
+
+            }
         }
 
         Mesh mesh = new Mesh();
         mesh.CombineMeshes(instances.ToArray(), true, true);
-
+        mesh.Optimize();
         ChunkData.ChunkMeshData chunkMeshData = new(mesh, materials.ToArray());
 
         return chunkMeshData;

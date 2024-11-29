@@ -45,7 +45,7 @@ public class RuleTileData : TileData
 
         foreach (var rule in Rules)
         {
-            if (rule.CheckReturnTile(neighbours, out TileData data))
+            if (rule.CheckReturnTile(neighbours, out TileData data, ref tileTransform))
             {
                 return data;
             }
@@ -115,7 +115,7 @@ public class TilingRule
         public const int Ignore = 2;
     }
 
-    public bool CheckReturnTile(int[] neighbours, out TileData newData)
+    public bool CheckReturnTile(int[] neighbours, out TileData newData, ref Matrix4x4 tileTransform)
     {
         newData = tile;
 
@@ -141,9 +141,13 @@ public class TilingRule
                 break;
 
             case (TILE_TRANSFORM.Rotated):
-                for (int angle = RotationAngle; angle < 360; angle += RotationAngle)
+                for (int angle = 0; angle < 360; angle += RotationAngle)
                 {
-                    if (CheckRotationalTileMatch(neighbours, angle)) return true;
+                    if (CheckRotationalTileMatch(neighbours, angle))
+                    {
+                        tileTransform = Matrix4x4.Rotate(Quaternion.Euler(0, angle + RotationAngle, 0));
+                        return true;
+                    }
                 }
                 break;
         }

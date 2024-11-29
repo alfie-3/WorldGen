@@ -88,7 +88,7 @@ public class WorldRenderer : MonoBehaviour
 
             foreach (KeyValuePair<string, TileBatch> chunkBatch in chunkBatches.Value)
             {
-                RenderParams rp = new RenderParams(chunkBatch.Value.tileData.TileMaterial);
+                RenderParams rp = new RenderParams(chunkBatch.Value.tileData.TileMaterials[0]);
                 Graphics.RenderMeshInstanced(rp, chunkBatch.Value.tileData.TileMesh, 0, chunkBatch.Value.GetMatricies());
             }
         }
