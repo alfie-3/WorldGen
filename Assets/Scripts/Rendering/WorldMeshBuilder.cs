@@ -77,21 +77,20 @@ public class WorldMeshBuilder : MonoBehaviour
         {
             TileData data = tile.tileData;
 
-            instance.transform = Matrix4x4.TRS(tile.tileLocation, tile.tileTransform.rotation, Vector3.one);
+            instance.transform = Matrix4x4.TRS(tile.tileLocation, tile.tileTransform.rotation, tile.tileTransform.lossyScale);
             instance.mesh = data.TileMesh;
 
-            instances.Add(instance);
-
-            foreach (Material material in tile.tileData.TileMaterials)
+            for (int i = 0; i < tile.tileData.TileMaterials.Length; i++)
             {
-                materials.Add(material);
+                materials.Add(tile.tileData.TileMaterials[i]);
+                instance.subMeshIndex = i;
 
+                instances.Add(instance);
             }
         }
 
         Mesh mesh = new Mesh();
         mesh.CombineMeshes(instances.ToArray(), true, true);
-        mesh.Optimize();
         ChunkData.ChunkMeshData chunkMeshData = new(mesh, materials.ToArray());
 
         return chunkMeshData;

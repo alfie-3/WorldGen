@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 628c35ffa8d75d444b81a1eb00731cdf, type: 3}
   m_Name: Corner
   m_EditorClassIdentifier: 
-  <TileId>k__BackingField: GrassTile_BL
+  <TileId>k__BackingField: GrassTile_Corner
   <TileMesh>k__BackingField: {fileID: 5163050964321891869, guid: 61f20381a49585d48872763e244283ec, type: 3}
   <TileMaterials>k__BackingField:
   - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}

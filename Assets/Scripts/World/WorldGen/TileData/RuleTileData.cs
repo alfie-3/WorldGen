@@ -135,6 +135,7 @@ public class TilingRule
                 break;
 
             case(TILE_TRANSFORM.MirrorXY):
+                if (CheckTileMatches(neighbours, false, false)) return true;
                 if (CheckTileMatches(neighbours, true, true)) return true;
                 if (CheckTileMatches(neighbours, true , false)) return true;
                 if (CheckTileMatches(neighbours, false, true)) return true;
@@ -145,13 +146,14 @@ public class TilingRule
                 {
                     if (CheckRotationalTileMatch(neighbours, angle))
                     {
-                        tileTransform = Matrix4x4.Rotate(Quaternion.Euler(0, angle + RotationAngle, 0));
+                        tileTransform = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, -angle, 0f), Vector3.one);
                         return true;
                     }
                 }
                 break;
         }
 
+        tileTransform = Matrix4x4.identity;
         return false;
     }
 
@@ -161,21 +163,23 @@ public class TilingRule
 
         for (int i = 0; i < minCount; i++)
         {
-            if (NeighbourRules[i] == Neighbour.Ignore) continue;
+            int mirroredPos = NeighbourRulesDict[GetMirroredPosition(RuleTileData.NeighbourPositions[i], mirrorX, mirrorY)];
+            if (mirroredPos == Neighbour.Ignore) continue;
 
-            if (neighbours[i] != NeighbourRules[i]) { return false; }
+            if (neighbours[i] != mirroredPos) { return false; }
         }
 
         return true;
     }
 
-    public bool CheckRotationalTileMatch(int[] neighbours, int angle)
+    public bool CheckRotationalTileMatch(int[] neighbours, int angle, bool mirrorX = false)
     {
         int minCount = Math.Min(neighbours.Length, NeighbourRules.Count);
 
         for (int i = 0; i < minCount; i++)
         {
-            int rotatedNeighbourValue = GetRotatedNeighbourRule(RuleTileData.NeighbourPositions[i], angle);
+            Vector3Int neighbourPos = mirrorX ? GetMirroredPosition(RuleTileData.NeighbourPositions[i], true, false) : RuleTileData.NeighbourPositions[i];
+            int rotatedNeighbourValue = GetRotatedNeighbourRule(neighbourPos, angle);
 
             if (rotatedNeighbourValue == Neighbour.Ignore) continue;
 
@@ -198,6 +202,7 @@ public class TilingRule
             case 270:
                 return NeighbourRulesDict[new(-position.z, position.y, position.x)];
         }
+
         return NeighbourRulesDict[position];
     }
 
@@ -206,7 +211,7 @@ public class TilingRule
         if (mirrorX)
             position.x *= -1;
         if (mirrorY)
-            position.y *= -1;
+            position.z *= -1;
         return position;
     }
 

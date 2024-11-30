@@ -17,15 +17,15 @@ MonoBehaviour:
   <TileMaterials>k__BackingField:
   - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
   Rules:
-  - ElementName: grass_single
+  - ElementName: GrassTile_Individual
     tile: {fileID: 11400000, guid: 2d91dbf0002ddee49b847f1ccfade03c, type: 2}
     NeighbourRules: 020000000000000002000000000000000000000002000000000000000200000002000000
-    TileTransformation: 4
-  - ElementName: GrassTile_BM
+    TileTransformation: 0
+  - ElementName: GrassTile_Middle
     tile: {fileID: 11400000, guid: 34b4adc23c095454585158344e1376ba, type: 2}
     NeighbourRules: 0200000001000000020000000100000001000000020000000000000002000000
     TileTransformation: 4
-  - ElementName: GrassTile_BL
+  - ElementName: GrassTile_Corner
     tile: {fileID: 11400000, guid: 8c1767a54467ac64689e8b617e1196f8, type: 2}
-    NeighbourRules: 020000000100000002000000000000000100000002000000000000000200000002000000
+    NeighbourRules: 020000000100000002000000010000000000000002000000000000000200000002000000
     TileTransformation: 4
