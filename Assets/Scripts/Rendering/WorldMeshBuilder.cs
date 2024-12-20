@@ -16,14 +16,8 @@ public class WorldMeshBuilder : MonoBehaviour
 
         public class ChunkMeshData
         {
-            public Mesh Mesh;
-            public Material[] Materials;
-
-            public ChunkMeshData(Mesh mesh, Material[] materials)
-            {
-                Mesh = mesh;
-                Materials = materials;
-            }
+            public Dictionary<Material, Mesh> meshDataDict = new Dictionary<Material, Mesh>();
+            public Mesh ColliderMesh = new();
         }
     }
 
@@ -68,10 +62,9 @@ public class WorldMeshBuilder : MonoBehaviour
 
     public ChunkData.ChunkMeshData GenerateChunkMeshData(Vector2Int chunkPos)
     {
-        List<CombineInstance> instances = new List<CombineInstance>();
+        Dictionary<Material, List<CombineInstance>> instances = new();
+        List<CombineInstance> colliderMeshInstances = new();
         CombineInstance instance = new();
-
-        HashSet<Material> materials = new HashSet<Material>();
 
         foreach (Tile tile in WorldGeneration.ChunkDict[chunkPos].Tiles.Values)
         {
@@ -82,16 +75,27 @@ public class WorldMeshBuilder : MonoBehaviour
 
             for (int i = 0; i < tile.tileData.TileMaterials.Length; i++)
             {
-                materials.Add(tile.tileData.TileMaterials[i]);
                 instance.subMeshIndex = i;
 
-                instances.Add(instance);
+                instances.TryAdd(tile.tileData.TileMaterials[i], new());
+
+                colliderMeshInstances.Add(instance);
+                instances[tile.tileData.TileMaterials[i]].Add(instance);
             }
         }
 
-        Mesh mesh = new Mesh();
-        mesh.CombineMeshes(instances.ToArray(), true, true);
-        ChunkData.ChunkMeshData chunkMeshData = new(mesh, materials.ToArray());
+        ChunkData.ChunkMeshData chunkMeshData = new();
+        foreach (KeyValuePair<Material, List<CombineInstance>> combineInstance in instances)
+        {
+            Mesh mesh = new Mesh();
+            mesh.CombineMeshes(combineInstance.Value.ToArray(), true, true);
+
+            chunkMeshData.meshDataDict.Add(combineInstance.Key, mesh);
+        }
+
+        Mesh colliderMesh = new Mesh();
+        colliderMesh.CombineMeshes(colliderMeshInstances.ToArray(), true, true);
+        chunkMeshData.ColliderMesh = colliderMesh;
 
         return chunkMeshData;
     }
@@ -100,14 +104,14 @@ public class WorldMeshBuilder : MonoBehaviour
     {
         if (ChunkMeshes[chunkLoc].Collider != null)
         {
-            ChunkMeshes[chunkLoc].Collider.sharedMesh = ChunkMeshes[chunkLoc].MeshData.Mesh;
+            ChunkMeshes[chunkLoc].Collider.sharedMesh = ChunkMeshes[chunkLoc].MeshData.ColliderMesh;
         }
         else
         {
             MeshCollider collider = gameObject.AddComponent<MeshCollider>();
 
             ChunkMeshes[chunkLoc].Collider = collider;
-            ChunkMeshes[chunkLoc].Collider.sharedMesh = ChunkMeshes[chunkLoc].MeshData.Mesh;
+            ChunkMeshes[chunkLoc].Collider.sharedMesh = ChunkMeshes[chunkLoc].MeshData.ColliderMesh;
         }
     }
 
@@ -130,13 +134,13 @@ public class WorldMeshBuilder : MonoBehaviour
 
             if (Vector2Int.Distance(ChunkMeshPairs.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
 
-            foreach (Material material in ChunkMeshPairs.Value.MeshData.Materials)
+            foreach (KeyValuePair<Material, Mesh> meshData in ChunkMeshPairs.Value.MeshData.meshDataDict)
             {
-                RenderParams renderParams = new(material);
+                RenderParams renderParams = new(meshData.Key);
 
                 Vector3 renderPos = Vector3.zero;
 
-                Graphics.RenderMesh(renderParams, ChunkMeshPairs.Value.MeshData.Mesh, 0, Matrix4x4.Translate(renderPos));
+                Graphics.RenderMesh(renderParams, meshData.Value, 0, Matrix4x4.Translate(renderPos));
             }
         }
     }
