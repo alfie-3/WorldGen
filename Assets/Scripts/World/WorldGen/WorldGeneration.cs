@@ -98,8 +98,10 @@ public class WorldGeneration : MonoBehaviour
         chunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATED;
 
         //Refreshes all tiles to enforce rules
-        foreach (Tile tile in chunk.Tiles.Values)
+        foreach (Tile tile in chunk.Tiles)
         {
+            if (tile == null) continue;
+
             tile.RefreshTile();
 
             if (tile.tileLocation.x % CHUNK_SIZE <= 1  || tile.tileLocation.z % CHUNK_SIZE <= 1)

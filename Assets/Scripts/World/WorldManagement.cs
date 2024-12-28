@@ -16,7 +16,7 @@ public class WorldManagement : MonoBehaviour
         }
         else
         {
-            CreateTile(tileLocation, tileData);
+            SetTile(tileLocation, tileData);
         }
     }
 
@@ -30,7 +30,7 @@ public class WorldManagement : MonoBehaviour
         }
     }
 
-    public static void CreateTile(Vector3Int coordinate, TileData tile)
+    public static void SetTile(Vector3Int coordinate, TileData tile)
     {
         if (WorldUtils.GetChunk(WorldUtils.GetChunkLocation(coordinate), out Chunk chunk))
         {
@@ -46,7 +46,8 @@ public class WorldManagement : MonoBehaviour
         {
             if (WorldUtils.GetTile(coordinate + RuleTileData.NeighbourPositions[i], out Tile tile))
             {
-                tile.RefreshTile();
+                if (tile != null)
+                    tile.RefreshTile();
             }
         }
     }

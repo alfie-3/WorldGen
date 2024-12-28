@@ -8,21 +8,27 @@ public class Tile
     public TileData BaseTileData {  get; private set; }
     public TileData tileData;
 
-    //Tile location is GLOBAL not local to the chunk
     public Vector3Int tileLocation;
+    public Vector3Int globalTileLocation;
 
     public Matrix4x4 tileTransform = Matrix4x4.identity;
 
-    public Tile(TileData tileData, Vector3Int location)
+    public Tile(TileData tileData, Vector3Int globalLocation)
     {
         BaseTileData = tileData;    
-        tileLocation = location;
+
+        //Tile needs to know its global location to perform certain checks
+        tileLocation = WorldUtils.TileCoordinateGlobalToLocal(globalLocation);
+        globalTileLocation = globalLocation;
+
+
+        this.tileData = BaseTileData.GetTileData(globalTileLocation, ref tileTransform);
     }
 
     public void SetTile(TileData tileData)
     {
         BaseTileData = tileData;
-        this.tileData = BaseTileData.GetTileData(tileLocation, ref tileTransform);
+        this.tileData = BaseTileData.GetTileData(globalTileLocation, ref tileTransform);
     }
 
     public void RefreshTile()

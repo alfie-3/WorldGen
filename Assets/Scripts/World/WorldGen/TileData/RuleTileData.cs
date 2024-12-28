@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static TilingRule;
-using static UnityEngine.RuleTile.TilingRuleOutput;
 
 [CreateAssetMenu(fileName = "New Rule Tile", menuName = "Tiles/New Rule Tile Data", order = 1)]
 public class RuleTileData : TileData
@@ -12,6 +9,7 @@ public class RuleTileData : TileData
 
     public static readonly Vector3Int[] NeighbourPositions =
     {
+        //Surrounding Tiles
                 new Vector3Int(-1, 0, 1),
                 new Vector3Int(0, 0, 1),
                 new Vector3Int(1, 0, 1),
@@ -20,13 +18,17 @@ public class RuleTileData : TileData
                 new Vector3Int(-1, 0, -1),
                 new Vector3Int(0, 0, -1),
                 new Vector3Int(1, 0, -1),
+        //Above and Below Tiles
+                new Vector3Int(0, 1, 0),
+                new Vector3Int(0, -1, 0)
+
     };
 
 
     public int[] GetNeighbours(Vector3Int location)
     {
         int[] neighbours = new int[NeighbourPositions.Length];
-        
+
         for (int i = 0; i < NeighbourPositions.Length; i++)
         {
             if (WorldUtils.GetTile(location + NeighbourPositions[i], out Tile tile))
@@ -66,7 +68,7 @@ public class RuleTileData : TileData
 [System.Serializable]
 public class TilingRule
 {
-    [HideInInspector] public string ElementName; 
+    [HideInInspector] public string ElementName;
 
     //Tile data to return
     public TileData tile;
@@ -78,15 +80,20 @@ public class TilingRule
     public Dictionary<Vector3Int, int> CachedNeighourRulesDict;
     public Dictionary<Vector3Int, int> NeighbourRulesDict
     {
-        get {
+        get
+        {
 
             if (CachedNeighourRulesDict != null) return CachedNeighourRulesDict;
 
             CachedNeighourRulesDict = new Dictionary<Vector3Int, int>();
             for (int i = 0; i < RuleTileData.NeighbourPositions.Length; i++)
             {
-                CachedNeighourRulesDict.Add(RuleTileData.NeighbourPositions[i], NeighbourRules[i]);
+                if (i > NeighbourRules.Count-1)
+                    CachedNeighourRulesDict.Add(RuleTileData.NeighbourPositions[i], Neighbour.Ignore);
+                else
+                    CachedNeighourRulesDict.Add(RuleTileData.NeighbourPositions[i], NeighbourRules[i]);
             }
+
             return CachedNeighourRulesDict;
         }
     }
@@ -122,22 +129,22 @@ public class TilingRule
 
         switch (TileTransformation)
         {
-            case(TILE_TRANSFORM.Static):
+            case (TILE_TRANSFORM.Static):
                 if (CheckTileMatches(neighbours)) return true;
                 break;
 
-            case(TILE_TRANSFORM.MirrorX):
+            case (TILE_TRANSFORM.MirrorX):
                 if (CheckTileMatches(neighbours, true, false)) return true;
                 break;
 
-            case(TILE_TRANSFORM.MirrorY):
+            case (TILE_TRANSFORM.MirrorY):
                 if (CheckTileMatches(neighbours, false, true)) return true;
                 break;
 
-            case(TILE_TRANSFORM.MirrorXY):
+            case (TILE_TRANSFORM.MirrorXY):
                 if (CheckTileMatches(neighbours, false, false)) return true;
                 if (CheckTileMatches(neighbours, true, true)) return true;
-                if (CheckTileMatches(neighbours, true , false)) return true;
+                if (CheckTileMatches(neighbours, true, false)) return true;
                 if (CheckTileMatches(neighbours, false, true)) return true;
                 break;
 
@@ -217,6 +224,12 @@ public class TilingRule
 
     public void OnValidate()
     {
+        if (tile == null)
+        {
+            ElementName = "None";
+            return;
+        }
+
         ElementName = tile.TileId;
     }
 }
