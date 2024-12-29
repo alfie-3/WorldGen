@@ -4,15 +4,17 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static UnityEngine.Rendering.DebugUI;
 
 public class WorldMeshBuilder : MonoBehaviour
 {
     public class ChunkData
     {
-        public ChunkMeshData MeshData;
+        public ChunkMeshData MeshData = new();
         public MeshCollider Collider;
 
         public bool Dirty = true;
+        public Coroutine generationRoutine;
 
         public class ChunkMeshData
         {
@@ -25,7 +27,7 @@ public class WorldMeshBuilder : MonoBehaviour
 
     private void OnEnable()
     {
-        WorldGeneration.ChunkReady += (value) => StartCoroutine(UpdateChunkMesh(value));
+        WorldGeneration.ChunkReady += (value) => StartChunkMeshGeneration(value);
         WorldGeneration.ChunkReleased += ReleaseChunk;
     }
 
@@ -34,16 +36,20 @@ public class WorldMeshBuilder : MonoBehaviour
         RenderMeshes();
     }
 
+    public void StartChunkMeshGeneration(Vector2Int coord)
+    {
+        ChunkDataDict.TryAdd(coord, new());
+
+        if (ChunkDataDict[coord].generationRoutine != null) { 
+            StopCoroutine(ChunkDataDict[coord].generationRoutine); 
+        }
+        ChunkDataDict[coord].generationRoutine = StartCoroutine(UpdateChunkMesh(coord));
+    }
+
     public IEnumerator UpdateChunkMesh(Vector2Int chunkLoc)
     {
-        if (ChunkDataDict.ContainsKey(chunkLoc))
-        {
-            ChunkDataDict[chunkLoc].Dirty = false;
-        }
-
         yield return GenerateChunkMeshData(chunkLoc, value =>
         {
-            ChunkDataDict.TryAdd(chunkLoc, new());
             ChunkDataDict[chunkLoc].Dirty = false;
             ChunkDataDict[chunkLoc].MeshData = value;
         }
@@ -59,22 +65,20 @@ public class WorldMeshBuilder : MonoBehaviour
         if (ChunkDataDict.TryRemove(chunkLoc, out ChunkData chunkMeshData))
         {
             Destroy(chunkMeshData.Collider);
+            StopAllCoroutines();
         }
     }
 
     public IEnumerator GenerateChunkMeshData(Vector2Int chunkPos, Action<ChunkData.ChunkMeshData> meshData)
     {
-        Debug.Log($"Generating chunk at {chunkPos}");
-
         Dictionary<Material, List<CombineInstance>> instances = new();
         CombineInstance instance = new();
 
         foreach (Tile tile in WorldGeneration.ChunkDict[chunkPos].Tiles)
         {
-            //Ignore tiles marked as "Dont Draw"
+            if (tile == null) continue; 
 
-
-            instance.transform = Matrix4x4.TRS(tile.tileLocation, tile.tileTransform.rotation, tile.tileTransform.lossyScale);
+            instance.transform = Matrix4x4.TRS(tile.globalTileLocation, tile.tileTransform.rotation, tile.tileTransform.lossyScale);
             instance.mesh = tile.tileData.TileMesh;
 
             for (int i = 0; i < tile.tileData.TileMaterials.Length; i++)
@@ -129,7 +133,7 @@ public class WorldMeshBuilder : MonoBehaviour
         {
             if (ChunkMeshPairs.Value.Dirty)
             {
-                StartCoroutine(UpdateChunkMesh(ChunkMeshPairs.Key));
+                StartChunkMeshGeneration(ChunkMeshPairs.Key);
             }
 
             if (Vector2Int.Distance(ChunkMeshPairs.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }

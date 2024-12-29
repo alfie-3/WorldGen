@@ -104,9 +104,9 @@ public class WorldGeneration : MonoBehaviour
 
             tile.RefreshTile();
 
-            if (tile.tileLocation.x % CHUNK_SIZE <= 1  || tile.tileLocation.z % CHUNK_SIZE <= 1)
+            if (tile.globalTileLocation.x % CHUNK_SIZE <= 1  || tile.globalTileLocation.z % CHUNK_SIZE <= 1)
             {
-                WorldManagement.UpdateAdjacentTiles(tile.tileLocation);
+                WorldManagement.UpdateAdjacentTiles(tile.globalTileLocation);
             }
         }
 

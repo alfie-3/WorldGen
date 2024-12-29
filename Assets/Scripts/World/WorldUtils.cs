@@ -31,6 +31,8 @@ public class WorldUtils : MonoBehaviour
     public static bool GetTile(Vector3Int tileCoordinate, out Tile returnTile)
     {
         returnTile = null;
+        if (!IsTileCoordinateValid(tileCoordinate)) return false;
+
         Vector2Int chunkLoc = new Vector2Int(RoundInt(tileCoordinate.x, WorldGeneration.CHUNK_SIZE), RoundInt(tileCoordinate.z, WorldGeneration.CHUNK_SIZE));
 
         if (GetChunk(chunkLoc, out Chunk returnChunk))
@@ -55,13 +57,20 @@ public class WorldUtils : MonoBehaviour
         return new(Math.Abs(global.x % WorldGeneration.CHUNK_SIZE), global.y, Math.Abs(global.z % WorldGeneration.CHUNK_SIZE));
     }
 
+    public static bool IsTileCoordinateValid(Vector3Int coord)
+    {
+        if (coord.y > WorldGeneration.MaxTerrainHeight - 1) return false;
+
+        return true;
+    }
+
     public static Vector3Int GetTopTileLocation(Vector3Int sampleTileLoc)
     {
-        for (int i = WorldGeneration.MaxTerrainHeight; i > 0; i--)
+        for (int i = WorldGeneration.MaxTerrainHeight - 1; i > 0; i--)
         {
             if (GetTile(new(sampleTileLoc.x, i, sampleTileLoc.z), out Tile tile))
             {
-                return tile.tileLocation;
+                return tile.globalTileLocation;
             }
         }
 

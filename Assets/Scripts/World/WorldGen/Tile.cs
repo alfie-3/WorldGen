@@ -33,7 +33,7 @@ public class Tile
 
     public void RefreshTile()
     {
-        WorldManagement.SetTile(tileLocation, BaseTileData);
-        WorldMeshBuilder.SetChunkDirty(WorldUtils.GetChunkLocation(tileLocation));
+        SetTile(BaseTileData);
+        WorldMeshBuilder.SetChunkDirty(WorldUtils.GetChunkLocation(globalTileLocation));
     }
 }

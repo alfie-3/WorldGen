@@ -1,9 +1,12 @@
+using System.Drawing;
 using UnityEngine;
 
 public class WorldManagement : MonoBehaviour
 {
     public static void SetTile(Vector3Int tileLocation, TileData tileData, bool placeOnNextVerticalTile = false)
     {
+        if (!WorldUtils.IsTileCoordinateValid(tileLocation)) return;
+
         if (WorldUtils.GetTile(tileLocation, out Tile tile))
         {
             if (!placeOnNextVerticalTile)
@@ -46,8 +49,7 @@ public class WorldManagement : MonoBehaviour
         {
             if (WorldUtils.GetTile(coordinate + RuleTileData.NeighbourPositions[i], out Tile tile))
             {
-                if (tile != null)
-                    tile.RefreshTile();
+                tile.RefreshTile();
             }
         }
     }
