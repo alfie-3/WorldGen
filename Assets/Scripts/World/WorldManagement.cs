@@ -29,7 +29,7 @@ public class WorldManagement : MonoBehaviour
         {
             chunk.ClearTile(tileLocation);
             UpdateAdjacentTiles(tileLocation);
-            WorldMeshBuilder.SetChunkDirty(WorldUtils.GetChunkLocation(tileLocation));
+            Chunk.RefreshChunk.Invoke(WorldUtils.GetChunkLocation(tileLocation));
         }
     }
 
@@ -39,7 +39,7 @@ public class WorldManagement : MonoBehaviour
         {
             chunk.SetTile(tile, coordinate);
             UpdateAdjacentTiles(coordinate);
-            WorldMeshBuilder.SetChunkDirty(WorldUtils.GetChunkLocation(coordinate));
+            Chunk.RefreshChunk.Invoke(WorldUtils.GetChunkLocation(coordinate));
         }
     }
 

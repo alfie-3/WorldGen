@@ -11,6 +11,8 @@ public class Chunk
 
     public Tile[,,] Tiles = new Tile[WorldGeneration.CHUNK_SIZE, WorldGeneration.MaxTerrainHeight, WorldGeneration.CHUNK_SIZE];
 
+    public static Action<Vector2Int> RefreshChunk = delegate { };
+
     private Tile GetTile(Vector3Int coord)
     {
         if (CheckOutOfChunkRange(coord))

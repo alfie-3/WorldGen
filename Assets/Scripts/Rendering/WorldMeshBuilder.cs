@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using static UnityEngine.Rendering.DebugUI;
@@ -13,7 +14,6 @@ public class WorldMeshBuilder : MonoBehaviour
         public ChunkMeshData MeshData = new();
         public MeshCollider Collider;
 
-        public bool Dirty = true;
         public Coroutine generationRoutine;
 
         public class ChunkMeshData
@@ -25,10 +25,14 @@ public class WorldMeshBuilder : MonoBehaviour
 
     static ConcurrentDictionary<Vector2Int, ChunkData> ChunkDataDict = new();
 
+    public static Queue<Vector2Int> chunkGenerationBuffer = new Queue<Vector2Int>();
+    public static HashSet<Vector2Int> dirtyChunkBuffer = new HashSet<Vector2Int>();
+
     private void OnEnable()
     {
-        WorldGeneration.ChunkReady += (value) => StartChunkMeshGeneration(value);
+        WorldGeneration.ChunkReady += (value) => chunkGenerationBuffer.Enqueue(value);
         WorldGeneration.ChunkReleased += ReleaseChunk;
+        Chunk.RefreshChunk += (coord) => { SetChunkDirty(coord); };
     }
 
     private void LateUpdate()
@@ -50,7 +54,6 @@ public class WorldMeshBuilder : MonoBehaviour
     {
         yield return GenerateChunkMeshData(chunkLoc, value =>
         {
-            ChunkDataDict[chunkLoc].Dirty = false;
             ChunkDataDict[chunkLoc].MeshData = value;
         }
         );
@@ -65,7 +68,7 @@ public class WorldMeshBuilder : MonoBehaviour
         if (ChunkDataDict.TryRemove(chunkLoc, out ChunkData chunkMeshData))
         {
             Destroy(chunkMeshData.Collider);
-            StopAllCoroutines();
+            StopCoroutine(chunkMeshData.generationRoutine);
         }
     }
 
@@ -77,6 +80,7 @@ public class WorldMeshBuilder : MonoBehaviour
         foreach (Tile tile in WorldGeneration.ChunkDict[chunkPos].Tiles)
         {
             if (tile == null) continue; 
+            if (tile.DontDraw) continue;
 
             instance.transform = Matrix4x4.TRS(tile.globalTileLocation, tile.tileTransform.rotation, tile.tileTransform.lossyScale);
             instance.mesh = tile.tileData.TileMesh;
@@ -97,6 +101,7 @@ public class WorldMeshBuilder : MonoBehaviour
             Mesh mesh = new Mesh();
 
             mesh.CombineMeshes(combineInstance.Value.ToArray(), true, true);
+            mesh.Optimize();
             chunkMeshData.meshDataDict.Add(combineInstance.Key, mesh);
         }
 
@@ -119,24 +124,25 @@ public class WorldMeshBuilder : MonoBehaviour
         }
     }
 
-    public static void SetChunkDirty(Vector2Int chunkLoc)
+    public void SetChunkDirty(Vector2Int chunkLoc)
     {
-        if (ChunkDataDict.TryGetValue(chunkLoc, out ChunkData value))
-        {
-            value.Dirty = true;
-        }
+        dirtyChunkBuffer.Add(chunkLoc);
     }
 
     public void RenderMeshes()
     {
+        if (chunkGenerationBuffer.Any())
+            StartChunkMeshGeneration(chunkGenerationBuffer.Dequeue());
+
         foreach (KeyValuePair<Vector2Int, ChunkData> ChunkMeshPairs in ChunkDataDict)
         {
-            if (ChunkMeshPairs.Value.Dirty)
+            if (Vector2Int.Distance(ChunkMeshPairs.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
+
+            if (dirtyChunkBuffer.Contains(ChunkMeshPairs.Key))
             {
+                dirtyChunkBuffer.Remove(ChunkMeshPairs.Key);
                 StartChunkMeshGeneration(ChunkMeshPairs.Key);
             }
-
-            if (Vector2Int.Distance(ChunkMeshPairs.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
 
             foreach (KeyValuePair<Material, Mesh> meshData in ChunkMeshPairs.Value.MeshData.meshDataDict)
             {
@@ -149,6 +155,7 @@ public class WorldMeshBuilder : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
         if (WorldGeneration.ChunkDict == null) return;
@@ -177,4 +184,5 @@ public class WorldMeshBuilder : MonoBehaviour
             Handles.Label(new Vector3(chunk.Value.ChunkLocation.x * WorldGeneration.CHUNK_SIZE, 0, chunk.Value.ChunkLocation.y * WorldGeneration.CHUNK_SIZE), chunk.Value.ChunkLocation.ToString());
         }
     }
+#endif
 }

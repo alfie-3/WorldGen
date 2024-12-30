@@ -153,14 +153,13 @@ public class TilingRule
                 {
                     if (CheckRotationalTileMatch(neighbours, angle))
                     {
-                        tileTransform = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, -angle, 0f), Vector3.one);
+                        tileTransform = Matrix4x4.TRS(tileTransform.GetPosition(), Quaternion.Euler(0f, -angle, 0f), Vector3.one);
                         return true;
                     }
                 }
                 break;
         }
 
-        tileTransform = Matrix4x4.identity;
         return false;
     }
 

@@ -17,6 +17,10 @@ MonoBehaviour:
   <TileMaterials>k__BackingField:
   - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
   Rules:
+  - ElementName: None
+    tile: {fileID: 0}
+    NeighbourRules: 010000000100000001000000010000000100000001000000010000000100000001000000
+    TileTransformation: 0
   - ElementName: GrassTile_Individual
     tile: {fileID: 11400000, guid: 2d91dbf0002ddee49b847f1ccfade03c, type: 2}
     NeighbourRules: 020000000000000002000000000000000000000002000000000000000200000002000000

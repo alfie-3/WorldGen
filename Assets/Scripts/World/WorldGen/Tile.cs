@@ -5,6 +5,8 @@ using UnityEngine;
 [System.Serializable]
 public class Tile
 {
+    public bool DontDraw => tileData == null;
+
     public TileData BaseTileData {  get; private set; }
     public TileData tileData;
 
@@ -21,8 +23,10 @@ public class Tile
         tileLocation = WorldUtils.TileCoordinateGlobalToLocal(globalLocation);
         globalTileLocation = globalLocation;
 
+        tileTransform = Matrix4x4.Translate(globalTileLocation);
 
         this.tileData = BaseTileData.GetTileData(globalTileLocation, ref tileTransform);
+
     }
 
     public void SetTile(TileData tileData)
@@ -34,6 +38,6 @@ public class Tile
     public void RefreshTile()
     {
         SetTile(BaseTileData);
-        WorldMeshBuilder.SetChunkDirty(WorldUtils.GetChunkLocation(globalTileLocation));
+        Chunk.RefreshChunk.Invoke(WorldUtils.GetChunkLocation(globalTileLocation));
     }
 }
