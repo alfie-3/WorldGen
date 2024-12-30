@@ -37,6 +37,9 @@ public class WorldMeshBuilder : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (chunkGenerationBuffer.Any())
+            StartChunkMeshGeneration(chunkGenerationBuffer.Dequeue());
+
         RenderMeshes();
     }
 
@@ -131,9 +134,6 @@ public class WorldMeshBuilder : MonoBehaviour
 
     public void RenderMeshes()
     {
-        if (chunkGenerationBuffer.Any())
-            StartChunkMeshGeneration(chunkGenerationBuffer.Dequeue());
-
         foreach (KeyValuePair<Vector2Int, ChunkData> ChunkMeshPairs in ChunkDataDict)
         {
             if (Vector2Int.Distance(ChunkMeshPairs.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
