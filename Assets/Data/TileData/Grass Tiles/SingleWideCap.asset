@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 628c35ffa8d75d444b81a1eb00731cdf, type: 3}
-  m_Name: Middle
+  m_Name: SingleWideCap
   m_EditorClassIdentifier: 
-  <TileId>k__BackingField: GrassTile_Middle
-  <TileMesh>k__BackingField: {fileID: -3395659402873561820, guid: 61f20381a49585d48872763e244283ec, type: 3}
+  <TileId>k__BackingField: Terrain_SinglewideCap
+  <TileMesh>k__BackingField: {fileID: -3624914746636279361, guid: 61f20381a49585d48872763e244283ec, type: 3}
   <TileMaterials>k__BackingField:
   - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
   - {fileID: 2100000, guid: a2444da620b52c040be4af8b80d920f7, type: 2}

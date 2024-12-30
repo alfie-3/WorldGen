@@ -1080,6 +1080,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36e1ea540db01ab40b892550c6086506, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  terrainMaterial: {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
 --- !u!4 &2047562831
 Transform:
   m_ObjectHideFlags: 0

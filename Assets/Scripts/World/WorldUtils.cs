@@ -52,6 +52,24 @@ public class WorldUtils : MonoBehaviour
         return false;
     }
 
+    public static int CountValidTiles(Vector2Int chunkCoordinate)
+    {
+        int validTiles = 0;
+
+        if (GetChunk(chunkCoordinate, out Chunk chunk))
+        {
+            foreach (Tile tile in chunk.Tiles)
+            {
+                if (tile == null) continue;
+                if (tile.DontDraw) continue;
+
+                validTiles++;
+            }
+        }
+
+        return validTiles;
+    }
+
     public static Vector3Int TileCoordinateGlobalToLocal(Vector3Int global)
     {
         return new(Math.Abs(global.x % WorldGeneration.CHUNK_SIZE), global.y, Math.Abs(global.z % WorldGeneration.CHUNK_SIZE));

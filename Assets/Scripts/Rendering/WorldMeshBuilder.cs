@@ -1,11 +1,8 @@
-using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using static UnityEngine.Rendering.DebugUI;
 
 public class WorldMeshBuilder : MonoBehaviour
 {
@@ -18,15 +15,20 @@ public class WorldMeshBuilder : MonoBehaviour
 
         public class ChunkMeshData
         {
-            public Dictionary<Material, Mesh> meshDataDict = new Dictionary<Material, Mesh>();
+            public Mesh mesh;
+            public CombineInstance[] combineInstances = new CombineInstance[0];
+
             public Mesh ColliderMesh = new();
         }
     }
 
+    [SerializeField] Material terrainMaterial;
+
     static ConcurrentDictionary<Vector2Int, ChunkData> ChunkDataDict = new();
 
     public static Queue<Vector2Int> chunkGenerationBuffer = new Queue<Vector2Int>();
-    public static HashSet<Vector2Int> dirtyChunkBuffer = new HashSet<Vector2Int>();
+    public static ConcurrentDictionary<Vector2Int, byte> dirtyChunkBuffer = new ConcurrentDictionary<Vector2Int, byte>();
+    System.Random randomPicker = new System.Random();
 
     private void OnEnable()
     {
@@ -40,30 +42,33 @@ public class WorldMeshBuilder : MonoBehaviour
         if (chunkGenerationBuffer.Any())
             StartChunkMeshGeneration(chunkGenerationBuffer.Dequeue());
 
+        //Buffers out chunk updates across multiple frames to prevent stuterring
+        if (dirtyChunkBuffer.Any())
+        {
+            KeyValuePair<Vector2Int, byte> randomHashet = dirtyChunkBuffer.ElementAt(randomPicker.Next(dirtyChunkBuffer.Count));
+            if (dirtyChunkBuffer.Contains(randomHashet))
+            {
+                if (ChunkDataDict.ContainsKey(randomHashet.Key))
+                    StartChunkMeshGeneration(randomHashet.Key);
+
+                dirtyChunkBuffer.Remove(randomHashet.Key, out _);
+            }
+        }
+
         RenderMeshes();
     }
 
     public void StartChunkMeshGeneration(Vector2Int coord)
     {
-        ChunkDataDict.TryAdd(coord, new());
-
-        if (ChunkDataDict[coord].generationRoutine != null) { 
-            StopCoroutine(ChunkDataDict[coord].generationRoutine); 
-        }
-        ChunkDataDict[coord].generationRoutine = StartCoroutine(UpdateChunkMesh(coord));
+        ChunkDataDict.TryAdd(coord, new ChunkData());
+        UpdateChunkMesh(coord);
     }
 
-    public IEnumerator UpdateChunkMesh(Vector2Int chunkLoc)
+    public void UpdateChunkMesh(Vector2Int chunkLoc)
     {
-        yield return GenerateChunkMeshData(chunkLoc, value =>
-        {
-            ChunkDataDict[chunkLoc].MeshData = value;
-        }
-        );
-
+        GenerateChunkMeshData(chunkLoc);
         UpdateCollider(chunkLoc);
 
-        yield return null;
     }
 
     public void ReleaseChunk(Vector2Int chunkLoc)
@@ -71,45 +76,46 @@ public class WorldMeshBuilder : MonoBehaviour
         if (ChunkDataDict.TryRemove(chunkLoc, out ChunkData chunkMeshData))
         {
             Destroy(chunkMeshData.Collider);
-            StopCoroutine(chunkMeshData.generationRoutine);
         }
     }
 
-    public IEnumerator GenerateChunkMeshData(Vector2Int chunkPos, Action<ChunkData.ChunkMeshData> meshData)
+    public void GenerateChunkMeshData(Vector2Int chunkPos)
     {
-        Dictionary<Material, List<CombineInstance>> instances = new();
-        CombineInstance instance = new();
+        int validTiles = WorldUtils.CountValidTiles(chunkPos);
+        if (ChunkDataDict[chunkPos].MeshData.combineInstances.Length != validTiles)
+            ChunkDataDict[chunkPos].MeshData.combineInstances = new CombineInstance[validTiles];
 
-        foreach (Tile tile in WorldGeneration.ChunkDict[chunkPos].Tiles)
+        int i = 0;
+
+        if (WorldUtils.GetChunk(chunkPos, out Chunk chunk))
         {
-            if (tile == null) continue; 
-            if (tile.DontDraw) continue;
-
-            instance.transform = Matrix4x4.TRS(tile.globalTileLocation, tile.tileTransform.rotation, tile.tileTransform.lossyScale);
-            instance.mesh = tile.tileData.TileMesh;
-
-            for (int i = 0; i < tile.tileData.TileMaterials.Length; i++)
+            foreach (Tile tile in chunk.Tiles)
             {
-                instance.subMeshIndex = i;
+                if (tile == null) continue;
+                if (tile.tileData == null) continue;
 
-                instances.TryAdd(tile.tileData.TileMaterials[i], new());
+                ChunkDataDict[chunkPos].MeshData.combineInstances[i].transform = tile.tileTransform;
+                ChunkDataDict[chunkPos].MeshData.combineInstances[i].mesh = tile.tileData.TileMesh;
 
-                instances[tile.tileData.TileMaterials[i]].Add(instance);
+                i++;
             }
         }
 
-        ChunkData.ChunkMeshData chunkMeshData = new();
-        foreach (KeyValuePair<Material, List<CombineInstance>> combineInstance in instances)
+        if (validTiles > i)
         {
-            Mesh mesh = new Mesh();
+            int remainder = validTiles - i;
 
-            mesh.CombineMeshes(combineInstance.Value.ToArray(), true, true);
-            mesh.Optimize();
-            chunkMeshData.meshDataDict.Add(combineInstance.Key, mesh);
+            for (int j = 0; j < i + remainder; j++)
+            {
+                ChunkDataDict[chunkPos].MeshData.combineInstances[j].transform = Matrix4x4.zero;
+                ChunkDataDict[chunkPos].MeshData.combineInstances[j].mesh = new();
+            }
         }
 
-        yield return null;
-        meshData(chunkMeshData);
+        Mesh mesh = new Mesh();
+        mesh.CombineMeshes(ChunkDataDict[chunkPos].MeshData.combineInstances, true, true);
+        mesh.Optimize();
+        ChunkDataDict[chunkPos].MeshData.mesh = mesh;
     }
 
     public void UpdateCollider(Vector2Int chunkLoc)
@@ -129,7 +135,7 @@ public class WorldMeshBuilder : MonoBehaviour
 
     public void SetChunkDirty(Vector2Int chunkLoc)
     {
-        dirtyChunkBuffer.Add(chunkLoc);
+        dirtyChunkBuffer.TryAdd(chunkLoc, 0);
     }
 
     public void RenderMeshes()
@@ -138,20 +144,11 @@ public class WorldMeshBuilder : MonoBehaviour
         {
             if (Vector2Int.Distance(ChunkMeshPairs.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
 
-            if (dirtyChunkBuffer.Contains(ChunkMeshPairs.Key))
-            {
-                dirtyChunkBuffer.Remove(ChunkMeshPairs.Key);
-                StartChunkMeshGeneration(ChunkMeshPairs.Key);
-            }
+            RenderParams renderParams = new(terrainMaterial);
 
-            foreach (KeyValuePair<Material, Mesh> meshData in ChunkMeshPairs.Value.MeshData.meshDataDict)
-            {
-                RenderParams renderParams = new(meshData.Key);
+            Vector3 renderPos = Vector3.zero;
 
-                Vector3 renderPos = Vector3.zero;
-
-                Graphics.RenderMesh(renderParams, meshData.Value, 0, Matrix4x4.Translate(renderPos));
-            }
+            Graphics.RenderMesh(renderParams, ChunkMeshPairs.Value.MeshData.mesh, 0, Matrix4x4.Translate(renderPos));
         }
     }
 
