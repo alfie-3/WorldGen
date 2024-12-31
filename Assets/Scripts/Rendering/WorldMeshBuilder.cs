@@ -8,7 +8,7 @@ public class WorldMeshBuilder : MonoBehaviour {
     public class ChunkData {
         public Coroutine generationRoutine;
 
-        public Dictionary<Material, MaterialMeshData> MaterialMeshes = new();
+        public ConcurrentDictionary<Material, MaterialMeshData> MaterialMeshes = new();
 
         public MeshCollider Collider;
         public Mesh ColliderMesh = new();
@@ -17,7 +17,8 @@ public class WorldMeshBuilder : MonoBehaviour {
             public Mesh mesh;
             public bool dirty;
 
-            public Dictionary<Vector3Int, CombineInstance> CombineInstanceDict = new();
+            public TileMeshInfo allocatedTileMeshInfo = new();
+            public TileMeshInfo[,,] TileMeshInfos = new TileMeshInfo[WorldGeneration.CHUNK_SIZE, WorldGeneration.MaxTerrainHeight, WorldGeneration.CHUNK_SIZE];
             public CombineInstance[] cachedCombineInstances = new CombineInstance[0];
         }
     }
@@ -35,10 +36,10 @@ public class WorldMeshBuilder : MonoBehaviour {
         WorldGeneration.ChunkReady += (value) => chunkGenerationBuffer.Enqueue(value);
         WorldGeneration.ChunkReleased += ReleaseChunk;
 
-        Chunk.OnTileSet += UpdateTile;
+        Chunk.OnTileUpdate += UpdateTile;
     }
 
-    private void LateUpdate() {
+    private void FixedUpdate() {
         if (chunkGenerationBuffer.Any())
             AddChunk(chunkGenerationBuffer.Dequeue());
 
@@ -52,7 +53,9 @@ public class WorldMeshBuilder : MonoBehaviour {
                 dirtyChunkBuffer.Remove(randomHashet.Key, out _);
             }
         }
+    }
 
+    private void LateUpdate() {
         RenderMeshes();
     }
 
@@ -88,18 +91,48 @@ public class WorldMeshBuilder : MonoBehaviour {
     }
 
     public void GenerateChunkMeshData(Vector2Int chunkPos) {
-
         foreach (KeyValuePair<Material, ChunkData.MaterialMeshData> materialMeshData in ChunkDataDict[chunkPos].MaterialMeshes) {
             if (!materialMeshData.Value.dirty) continue;
+            materialMeshData.Value.dirty = false;
 
-            if (materialMeshData.Value.CombineInstanceDict.Count == materialMeshData.Value.cachedCombineInstances.Length)
-                materialMeshData.Value.CombineInstanceDict.Values.CopyTo(materialMeshData.Value.cachedCombineInstances, 0);
-            else materialMeshData.Value.cachedCombineInstances = materialMeshData.Value.CombineInstanceDict.Values.ToArray();
+            CacheCombinerInstances(materialMeshData.Value);
 
             Mesh mesh = new Mesh();
             mesh.CombineMeshes(materialMeshData.Value.cachedCombineInstances, true, true);
             mesh.Optimize();
             materialMeshData.Value.mesh = mesh;
+        }
+    }
+
+    public void CacheCombinerInstances(ChunkData.MaterialMeshData materialMeshData) {
+        int arrayLength = 0;
+        foreach (TileMeshInfo meshInfo in materialMeshData.TileMeshInfos) {
+            if (meshInfo.Transform != Matrix4x4.zero) {
+                arrayLength++;
+            }
+        }
+
+        if (materialMeshData.cachedCombineInstances.Length != arrayLength)
+            materialMeshData.cachedCombineInstances = new CombineInstance[arrayLength];
+
+        int i = 0;
+        foreach (TileMeshInfo meshInfo in materialMeshData.TileMeshInfos) {
+            if (meshInfo.Transform == Matrix4x4.zero) continue;
+            if (i > materialMeshData.cachedCombineInstances.Length - 1) continue;
+
+            materialMeshData.cachedCombineInstances[i].mesh = meshInfo.Mesh;
+            materialMeshData.cachedCombineInstances[i].transform = meshInfo.Transform;
+            i++;
+        }
+
+
+        if (arrayLength > i) {
+            int remainder = arrayLength - i;
+
+            for (int j = i; j < i + remainder; j++) {
+                materialMeshData.cachedCombineInstances[j].transform = Matrix4x4.zero;
+                materialMeshData.cachedCombineInstances[j].mesh = new();
+            }
         }
     }
 
@@ -125,29 +158,27 @@ public class WorldMeshBuilder : MonoBehaviour {
     }
 
     public void RemoveTileData(Vector2Int chunkCoord, TileInfo tile) {
-        if (tile == null) return;
+        if (tile.tiledata == null) return;
 
         if (ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(tile.tiledata.TileMaterials[0], out ChunkData.MaterialMeshData chunkMatData)) {
-            chunkMatData.CombineInstanceDict.Remove(tile.tileLocation);
+            chunkMatData.TileMeshInfos[tile.tileLocation.x, tile.tileLocation.y, tile.tileLocation.z] = TileMeshInfo.Empty;
             chunkMatData.dirty = true;
         }
     }
 
     public void AddTileData(Vector2Int chunkCoord, TileInfo tile) {
-        if (tile == null) return;
+        if (tile.tiledata == null) return;
+
 
         if (!ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(tile.tiledata.TileMaterials[0], out ChunkData.MaterialMeshData chunkMaterialData)) {
-            ChunkDataDict[chunkCoord].MaterialMeshes.Add(tile.tiledata.TileMaterials[0], new());
+            ChunkDataDict[chunkCoord].MaterialMeshes.TryAdd(tile.tiledata.TileMaterials[0], new());
             chunkMaterialData = ChunkDataDict[chunkCoord].MaterialMeshes[tile.tiledata.TileMaterials[0]];
         }
 
-        CombineInstance newCombineInstance = new();
-        newCombineInstance.mesh = tile.tiledata.TileMesh;
-        newCombineInstance.transform = tile.tileTransform;
+        chunkMaterialData.allocatedTileMeshInfo.Mesh = tile.tiledata.TileMesh;
+        chunkMaterialData.allocatedTileMeshInfo.Transform = tile.tileTransform;
 
-        if (!chunkMaterialData.CombineInstanceDict.TryAdd(tile.tileLocation, newCombineInstance)) {
-            chunkMaterialData.CombineInstanceDict[tile.tileLocation] = newCombineInstance;
-        }
+        chunkMaterialData.TileMeshInfos[tile.tileLocation.x, tile.tileLocation.y, tile.tileLocation.z] = chunkMaterialData.allocatedTileMeshInfo;
 
         chunkMaterialData.dirty = true;
     }
@@ -172,10 +203,24 @@ public class WorldMeshBuilder : MonoBehaviour {
         }
     }
 
-    public class TileUpdateInfo {
-        Vector2Int chunkCoord;
-        TileInfo prevInfo;
-        TileInfo newInfo;
+    public struct TileMeshInfo {
+        public Matrix4x4 Transform;
+        public Mesh Mesh;
+
+        public static readonly TileMeshInfo Empty = new(true);
+        public bool IsEmpty;
+
+        public TileMeshInfo(Matrix4x4 transform, Mesh mesh) {
+            this.Transform = transform;
+            this.Mesh = mesh;
+            IsEmpty = false;
+        }
+
+        public TileMeshInfo(bool IsEmpty) {
+            this.IsEmpty = true;
+            Transform = Matrix4x4.zero;
+            Mesh = null;
+        }
     }
 
 #if UNITY_EDITOR
