@@ -15,5 +15,4 @@ MonoBehaviour:
   <TileId>k__BackingField: Terrain_Edge
   <TileMesh>k__BackingField: {fileID: -1083108532252104561, guid: 61f20381a49585d48872763e244283ec, type: 3}
   <TileMaterials>k__BackingField:
-  - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
   - {fileID: 2100000, guid: a2444da620b52c040be4af8b80d920f7, type: 2}
