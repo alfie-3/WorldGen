@@ -134,7 +134,7 @@ Material:
     - _ReceiveShadows: 1
     - _ReflectionSource: 0
     - _Shininess: 1
-    - _Smoothness: 0.518
+    - _Smoothness: 0.173
     - _SmoothnessTextureChannel: 0
     - _SpecSource: 0
     - _SpecularHighlights: 1

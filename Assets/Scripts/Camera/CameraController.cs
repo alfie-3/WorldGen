@@ -13,6 +13,7 @@ public class CameraController : MonoBehaviour
         Vector2 inputVector = new(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
 
         Vector3 moveVector = new(inputVector.x, 0, inputVector.y);
+        moveVector.Normalize();
 
         float mult = Input.GetKeyDown(KeyCode.LeftShift) ? moveSpeedMult : 1;
 

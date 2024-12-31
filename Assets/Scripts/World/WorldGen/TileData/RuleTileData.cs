@@ -49,7 +49,7 @@ public class RuleTileData : TileData
         {
             if (rule.CheckReturnTile(neighbours, out TileData data, ref tileTransform))
             {
-                return data;
+                return data.GetTileData(position, ref tileTransform);
             }
         }
 

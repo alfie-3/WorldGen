@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ceb47cd920362314b95ba0cd0bb35ac2, type: 3}
   m_Name: GrassRuleTile
   m_EditorClassIdentifier: 
-  <TileId>k__BackingField: GrassRuleTile
+  <TileId>k__BackingField: Terrain_MainRuleTile
   <TileMesh>k__BackingField: {fileID: 1385279003812690709, guid: 61f20381a49585d48872763e244283ec, type: 3}
   <TileMaterials>k__BackingField:
   - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
@@ -25,13 +25,9 @@ MonoBehaviour:
     tile: {fileID: 11400000, guid: 34b4adc23c095454585158344e1376ba, type: 2}
     NeighbourRules: 0200000001000000020000000100000001000000020000000000000002000000
     TileTransformation: 4
-  - ElementName: Terrain_Corner
-    tile: {fileID: 11400000, guid: 8c1767a54467ac64689e8b617e1196f8, type: 2}
+  - ElementName: Terrain_CornerRuleTile
+    tile: {fileID: 11400000, guid: 7c7a51ad1b73ced4499827ecfcb55013, type: 2}
     NeighbourRules: 020000000100000000000000010000000000000000000000000000000200000002000000
-    TileTransformation: 4
-  - ElementName: Terrain_Slope
-    tile: {fileID: 11400000, guid: fbf1346c891152a4b9ce9b75602ae756, type: 2}
-    NeighbourRules: 020000000100000002000000010000000000000002000000000000000200000002000000
     TileTransformation: 4
   - ElementName: Terrain_Singlewide
     tile: {fileID: 11400000, guid: c28633f29a1815d4f8b03bd7b7b6573f, type: 2}
