@@ -37,7 +37,7 @@ public class TileInfoTooltip : MonoBehaviour
 
             hitLoc = Vector3Int.RoundToInt(new(hit.point.x, 0, hit.point.z));
 
-            if (WorldUtils.GetTile(WorldUtils.GetTopTileLocation(hitLoc), out Tile tile))
+            if (WorldUtils.TryGetTile(WorldUtils.GetTopTileLocation(hitLoc), out Tile tile))
             {
                 ShowTooltip($"{tile.tileData.TileId} \n  {tile.globalTileLocation} \n {WorldUtils.GetChunkLocation(tile.globalTileLocation)} \n Matrix \n {tile.tileTransform.rotation.eulerAngles} \n {tile.tileTransform.lossyScale}");
             }

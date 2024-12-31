@@ -17,10 +17,6 @@ MonoBehaviour:
   <TileMaterials>k__BackingField:
   - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
   Rules:
-  - ElementName: None
-    tile: {fileID: 0}
-    NeighbourRules: 010000000100000001000000010000000100000001000000010000000100000001000000
-    TileTransformation: 0
   - ElementName: Terrain_Individual
     tile: {fileID: 11400000, guid: 2d91dbf0002ddee49b847f1ccfade03c, type: 2}
     NeighbourRules: 020000000000000002000000000000000000000002000000000000000200000002000000
@@ -31,6 +27,10 @@ MonoBehaviour:
     TileTransformation: 4
   - ElementName: Terrain_Corner
     tile: {fileID: 11400000, guid: 8c1767a54467ac64689e8b617e1196f8, type: 2}
+    NeighbourRules: 020000000100000000000000010000000000000000000000000000000200000002000000
+    TileTransformation: 4
+  - ElementName: Terrain_Slope
+    tile: {fileID: 11400000, guid: fbf1346c891152a4b9ce9b75602ae756, type: 2}
     NeighbourRules: 020000000100000002000000010000000000000002000000000000000200000002000000
     TileTransformation: 4
   - ElementName: Terrain_Singlewide

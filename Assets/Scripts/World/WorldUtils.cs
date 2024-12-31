@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class WorldUtils : MonoBehaviour
 {
-    public static bool GetChunk(Vector2Int chunkCoordinate, out Chunk returnChunk)
+    public static bool TryGetChunk(Vector2Int chunkCoordinate, out Chunk returnChunk)
     {
         if (WorldGeneration.ChunkDict.TryGetValue(chunkCoordinate, out Chunk chunk))
         {
@@ -28,14 +28,14 @@ public class WorldUtils : MonoBehaviour
             return false;
     }
 
-    public static bool GetTile(Vector3Int tileCoordinate, out Tile returnTile)
+    public static bool TryGetTile(Vector3Int tileCoordinate, out Tile returnTile)
     {
         returnTile = null;
         if (!IsTileCoordinateValid(tileCoordinate)) return false;
 
         Vector2Int chunkLoc = new Vector2Int(RoundInt(tileCoordinate.x, WorldGeneration.CHUNK_SIZE), RoundInt(tileCoordinate.z, WorldGeneration.CHUNK_SIZE));
 
-        if (GetChunk(chunkLoc, out Chunk returnChunk))
+        if (TryGetChunk(chunkLoc, out Chunk returnChunk))
         {
             Vector3Int tileLoc = TileCoordinateGlobalToLocal(tileCoordinate);
             if (tileLoc.y < 0) return false;
@@ -56,7 +56,7 @@ public class WorldUtils : MonoBehaviour
     {
         int validTiles = 0;
 
-        if (GetChunk(chunkCoordinate, out Chunk chunk))
+        if (TryGetChunk(chunkCoordinate, out Chunk chunk))
         {
             foreach (Tile tile in chunk.Tiles)
             {
@@ -86,7 +86,7 @@ public class WorldUtils : MonoBehaviour
     {
         for (int i = WorldGeneration.MaxTerrainHeight - 1; i > 0; i--)
         {
-            if (GetTile(new(sampleTileLoc.x, i, sampleTileLoc.z), out Tile tile))
+            if (TryGetTile(new(sampleTileLoc.x, i, sampleTileLoc.z), out Tile tile))
             {
                 return tile.globalTileLocation;
             }

@@ -31,7 +31,7 @@ public class RuleTileData : TileData
 
         for (int i = 0; i < NeighbourPositions.Length; i++)
         {
-            if (WorldUtils.GetTile(location + NeighbourPositions[i], out Tile tile))
+            if (WorldUtils.TryGetTile(location + NeighbourPositions[i], out Tile tile))
             {
                 neighbours[i] = TilingRule.Neighbour.TilePresent;
             }

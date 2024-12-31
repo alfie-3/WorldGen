@@ -37,7 +37,29 @@ public class Tile
 
     public void RefreshTile()
     {
+        TileInfo prevTileInfo = new(this);
+
         SetTile(BaseTileData);
+
+        Chunk.OnTileSet.Invoke(WorldUtils.GetChunkLocation(globalTileLocation), prevTileInfo, new TileInfo(this));
         Chunk.RefreshChunk.Invoke(WorldUtils.GetChunkLocation(globalTileLocation));
+    }
+}
+
+public class TileInfo {
+    public Vector3Int tileLocation;
+    public Matrix4x4 tileTransform;
+    public TileData tiledata;
+
+    public TileInfo(Vector3Int tileLoc, Matrix4x4 tileTransform, TileData tileData) {
+        tileLocation = tileLoc;
+        this.tileTransform = tileTransform;
+        this.tiledata = tileData;
+    }
+
+    public TileInfo(Tile tile) {
+        tileLocation = tile.tileLocation;
+        tileTransform = tile.tileTransform;
+        tiledata = tile.tileData;
     }
 }

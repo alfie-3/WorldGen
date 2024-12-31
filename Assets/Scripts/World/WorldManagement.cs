@@ -7,7 +7,7 @@ public class WorldManagement : MonoBehaviour
     {
         if (!WorldUtils.IsTileCoordinateValid(tileLocation)) return;
 
-        if (WorldUtils.GetTile(tileLocation, out Tile tile))
+        if (WorldUtils.TryGetTile(tileLocation, out Tile tile))
         {
             if (!placeOnNextVerticalTile)
                 tile.SetTile(tileData);
@@ -25,7 +25,7 @@ public class WorldManagement : MonoBehaviour
 
     public static void RemoveTile(Vector3Int tileLocation)
     {
-        if (WorldUtils.GetChunk(WorldUtils.GetChunkLocation(tileLocation), out Chunk chunk))
+        if (WorldUtils.TryGetChunk(WorldUtils.GetChunkLocation(tileLocation), out Chunk chunk))
         {
             chunk.ClearTile(tileLocation);
             UpdateAdjacentTiles(tileLocation);
@@ -35,7 +35,7 @@ public class WorldManagement : MonoBehaviour
 
     public static void SetTile(Vector3Int coordinate, TileData tile)
     {
-        if (WorldUtils.GetChunk(WorldUtils.GetChunkLocation(coordinate), out Chunk chunk))
+        if (WorldUtils.TryGetChunk(WorldUtils.GetChunkLocation(coordinate), out Chunk chunk))
         {
             chunk.SetTile(tile, coordinate);
             UpdateAdjacentTiles(coordinate);
@@ -47,7 +47,7 @@ public class WorldManagement : MonoBehaviour
     {
         for (int i = 0; i < RuleTileData.NeighbourPositions.Length; i++)
         {
-            if (WorldUtils.GetTile(coordinate + RuleTileData.NeighbourPositions[i], out Tile tile))
+            if (WorldUtils.TryGetTile(coordinate + RuleTileData.NeighbourPositions[i], out Tile tile))
             {
                 tile.RefreshTile();
             }

@@ -13,6 +13,8 @@ public class Chunk
 
     public static Action<Vector2Int> RefreshChunk = delegate { };
 
+    public static Action<Vector2Int, TileInfo, TileInfo> OnTileSet = delegate { };
+
     private Tile GetTile(Vector3Int coord)
     {
         if (CheckOutOfChunkRange(coord))

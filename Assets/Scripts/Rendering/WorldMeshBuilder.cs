@@ -4,21 +4,21 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class WorldMeshBuilder : MonoBehaviour
-{
-    public class ChunkData
-    {
-        public ChunkMeshData MeshData = new();
-        public MeshCollider Collider;
-
+public class WorldMeshBuilder : MonoBehaviour {
+    public class ChunkData {
         public Coroutine generationRoutine;
 
-        public class ChunkMeshData
-        {
-            public Mesh mesh;
-            public CombineInstance[] combineInstances = new CombineInstance[0];
+        public Dictionary<Material, MaterialMeshData> MaterialMeshes = new();
 
-            public Mesh ColliderMesh = new();
+        public MeshCollider Collider;
+        public Mesh ColliderMesh = new();
+
+        public class MaterialMeshData {
+            public Mesh mesh;
+            public bool dirty;
+
+            public Dictionary<Vector3Int, CombineInstance> CombineInstanceDict = new();
+            public CombineInstance[] cachedCombineInstances = new CombineInstance[0];
         }
     }
 
@@ -28,26 +28,24 @@ public class WorldMeshBuilder : MonoBehaviour
 
     public static Queue<Vector2Int> chunkGenerationBuffer = new Queue<Vector2Int>();
     public static ConcurrentDictionary<Vector2Int, byte> dirtyChunkBuffer = new ConcurrentDictionary<Vector2Int, byte>();
+
     System.Random randomPicker = new System.Random();
 
-    private void OnEnable()
-    {
+    private void OnEnable() {
         WorldGeneration.ChunkReady += (value) => chunkGenerationBuffer.Enqueue(value);
         WorldGeneration.ChunkReleased += ReleaseChunk;
-        Chunk.RefreshChunk += (coord) => { SetChunkDirty(coord); };
+
+        Chunk.OnTileSet += UpdateTile;
     }
 
-    private void LateUpdate()
-    {
+    private void LateUpdate() {
         if (chunkGenerationBuffer.Any())
-            StartChunkMeshGeneration(chunkGenerationBuffer.Dequeue());
+            AddChunk(chunkGenerationBuffer.Dequeue());
 
         //Buffers out chunk updates across multiple frames to prevent stuterring
-        if (dirtyChunkBuffer.Any())
-        {
+        if (dirtyChunkBuffer.Any()) {
             KeyValuePair<Vector2Int, byte> randomHashet = dirtyChunkBuffer.ElementAt(randomPicker.Next(dirtyChunkBuffer.Count));
-            if (dirtyChunkBuffer.Contains(randomHashet))
-            {
+            if (dirtyChunkBuffer.Contains(randomHashet)) {
                 if (ChunkDataDict.ContainsKey(randomHashet.Key))
                     StartChunkMeshGeneration(randomHashet.Key);
 
@@ -58,111 +56,136 @@ public class WorldMeshBuilder : MonoBehaviour
         RenderMeshes();
     }
 
-    public void StartChunkMeshGeneration(Vector2Int coord)
-    {
+    public void AddChunk(Vector2Int coord) {
         ChunkDataDict.TryAdd(coord, new ChunkData());
+
+        if (WorldUtils.TryGetChunk(coord, out Chunk chunk)) {
+            foreach (Tile tile in chunk.Tiles) {
+                if (tile == null) continue;
+                if (tile.DontDraw) continue;
+
+                AddTileData(coord, new(tile));
+            }
+        }
+
+        StartChunkMeshGeneration(coord);
+    }
+
+    public void StartChunkMeshGeneration(Vector2Int coord) {
         UpdateChunkMesh(coord);
     }
 
-    public void UpdateChunkMesh(Vector2Int chunkLoc)
-    {
+    public void UpdateChunkMesh(Vector2Int chunkLoc) {
         GenerateChunkMeshData(chunkLoc);
         UpdateCollider(chunkLoc);
 
     }
 
-    public void ReleaseChunk(Vector2Int chunkLoc)
-    {
-        if (ChunkDataDict.TryRemove(chunkLoc, out ChunkData chunkMeshData))
-        {
+    public void ReleaseChunk(Vector2Int chunkLoc) {
+        if (ChunkDataDict.TryRemove(chunkLoc, out ChunkData chunkMeshData)) {
             Destroy(chunkMeshData.Collider);
         }
     }
 
-    public void GenerateChunkMeshData(Vector2Int chunkPos)
-    {
-        int validTiles = WorldUtils.CountValidTiles(chunkPos);
-        if (ChunkDataDict[chunkPos].MeshData.combineInstances.Length != validTiles)
-            ChunkDataDict[chunkPos].MeshData.combineInstances = new CombineInstance[validTiles];
+    public void GenerateChunkMeshData(Vector2Int chunkPos) {
 
-        int i = 0;
+        foreach (KeyValuePair<Material, ChunkData.MaterialMeshData> materialMeshData in ChunkDataDict[chunkPos].MaterialMeshes) {
+            if (!materialMeshData.Value.dirty) continue;
 
-        if (WorldUtils.GetChunk(chunkPos, out Chunk chunk))
-        {
-            foreach (Tile tile in chunk.Tiles)
-            {
-                if (tile == null) continue;
-                if (tile.tileData == null) continue;
+            if (materialMeshData.Value.CombineInstanceDict.Count == materialMeshData.Value.cachedCombineInstances.Length)
+                materialMeshData.Value.CombineInstanceDict.Values.CopyTo(materialMeshData.Value.cachedCombineInstances, 0);
+            else materialMeshData.Value.cachedCombineInstances = materialMeshData.Value.CombineInstanceDict.Values.ToArray();
 
-                ChunkDataDict[chunkPos].MeshData.combineInstances[i].transform = tile.tileTransform;
-                ChunkDataDict[chunkPos].MeshData.combineInstances[i].mesh = tile.tileData.TileMesh;
-
-                i++;
-            }
+            Mesh mesh = new Mesh();
+            mesh.CombineMeshes(materialMeshData.Value.cachedCombineInstances, true, true);
+            mesh.Optimize();
+            materialMeshData.Value.mesh = mesh;
         }
-
-        if (validTiles > i)
-        {
-            int remainder = validTiles - i;
-
-            for (int j = 0; j < i + remainder; j++)
-            {
-                ChunkDataDict[chunkPos].MeshData.combineInstances[j].transform = Matrix4x4.zero;
-                ChunkDataDict[chunkPos].MeshData.combineInstances[j].mesh = new();
-            }
-        }
-
-        Mesh mesh = new Mesh();
-        mesh.CombineMeshes(ChunkDataDict[chunkPos].MeshData.combineInstances, true, true);
-        mesh.Optimize();
-        ChunkDataDict[chunkPos].MeshData.mesh = mesh;
     }
 
-    public void UpdateCollider(Vector2Int chunkLoc)
-    {
-        if (ChunkDataDict[chunkLoc].Collider != null)
-        {
-            ChunkDataDict[chunkLoc].Collider.sharedMesh = ChunkDataDict[chunkLoc].MeshData.ColliderMesh;
+    public void UpdateCollider(Vector2Int chunkLoc) {
+        if (ChunkDataDict[chunkLoc].Collider != null) {
+            ChunkDataDict[chunkLoc].Collider.sharedMesh = ChunkDataDict[chunkLoc].ColliderMesh;
         }
-        else
-        {
+        else {
             MeshCollider collider = gameObject.AddComponent<MeshCollider>();
 
             ChunkDataDict[chunkLoc].Collider = collider;
-            ChunkDataDict[chunkLoc].Collider.sharedMesh = ChunkDataDict[chunkLoc].MeshData.ColliderMesh;
+            ChunkDataDict[chunkLoc].Collider.sharedMesh = ChunkDataDict[chunkLoc].ColliderMesh;
         }
     }
 
-    public void SetChunkDirty(Vector2Int chunkLoc)
-    {
+    public void UpdateTile(Vector2Int chunkCoord, TileInfo previousData, TileInfo currentData) {
+        if (!ChunkDataDict.ContainsKey(chunkCoord)) return;
+
+        RemoveTileData(chunkCoord, previousData);
+        AddTileData(chunkCoord, currentData);
+
+        dirtyChunkBuffer.TryAdd(chunkCoord, 0);
+    }
+
+    public void RemoveTileData(Vector2Int chunkCoord, TileInfo tile) {
+        if (tile == null) return;
+
+        if (ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(tile.tiledata.TileMaterials[0], out ChunkData.MaterialMeshData chunkMatData)) {
+            chunkMatData.CombineInstanceDict.Remove(tile.tileLocation);
+            chunkMatData.dirty = true;
+        }
+    }
+
+    public void AddTileData(Vector2Int chunkCoord, TileInfo tile) {
+        if (tile == null) return;
+
+        if (!ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(tile.tiledata.TileMaterials[0], out ChunkData.MaterialMeshData chunkMaterialData)) {
+            ChunkDataDict[chunkCoord].MaterialMeshes.Add(tile.tiledata.TileMaterials[0], new());
+            chunkMaterialData = ChunkDataDict[chunkCoord].MaterialMeshes[tile.tiledata.TileMaterials[0]];
+        }
+
+        CombineInstance newCombineInstance = new();
+        newCombineInstance.mesh = tile.tiledata.TileMesh;
+        newCombineInstance.transform = tile.tileTransform;
+
+        if (!chunkMaterialData.CombineInstanceDict.TryAdd(tile.tileLocation, newCombineInstance)) {
+            chunkMaterialData.CombineInstanceDict[tile.tileLocation] = newCombineInstance;
+        }
+
+        chunkMaterialData.dirty = true;
+    }
+
+
+
+    public void SetChunkDirty(Vector2Int chunkLoc) {
         dirtyChunkBuffer.TryAdd(chunkLoc, 0);
     }
 
-    public void RenderMeshes()
-    {
-        foreach (KeyValuePair<Vector2Int, ChunkData> ChunkMeshPairs in ChunkDataDict)
-        {
-            if (Vector2Int.Distance(ChunkMeshPairs.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
+    public void RenderMeshes() {
+        foreach (KeyValuePair<Vector2Int, ChunkData> ChunkMeshPair in ChunkDataDict) {
+            if (Vector2Int.Distance(ChunkMeshPair.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
 
-            RenderParams renderParams = new(terrainMaterial);
+            foreach (KeyValuePair<Material, ChunkData.MaterialMeshData> materialMeshData in ChunkMeshPair.Value.MaterialMeshes) {
+                if (materialMeshData.Value.mesh == null) continue;
 
-            Vector3 renderPos = Vector3.zero;
-
-            Graphics.RenderMesh(renderParams, ChunkMeshPairs.Value.MeshData.mesh, 0, Matrix4x4.Translate(renderPos));
+                RenderParams renderParams = new(materialMeshData.Key);
+                Matrix4x4 renderPos = Matrix4x4.Translate(Vector3.zero);
+                Graphics.RenderMesh(renderParams, materialMeshData.Value.mesh, 0, renderPos);
+            }
         }
     }
 
+    public class TileUpdateInfo {
+        Vector2Int chunkCoord;
+        TileInfo prevInfo;
+        TileInfo newInfo;
+    }
+
 #if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
+    private void OnDrawGizmosSelected() {
         if (WorldGeneration.ChunkDict == null) return;
 
-        foreach (KeyValuePair<Vector2Int, Chunk> chunk in WorldGeneration.ChunkDict)
-        {
+        foreach (KeyValuePair<Vector2Int, Chunk> chunk in WorldGeneration.ChunkDict) {
             Gizmos.matrix = Matrix4x4.Translate(new(WorldGeneration.CHUNK_SIZE / 2, 0, WorldGeneration.CHUNK_SIZE / 2));
 
-            switch (chunk.Value.ChunkStatus)
-            {
+            switch (chunk.Value.ChunkStatus) {
                 case Chunk.CHUNK_STATUS.GENERATED:
                     Gizmos.color = Color.green;
                     break;
