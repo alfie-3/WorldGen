@@ -160,6 +160,7 @@ public class TilingRule
                 break;
         }
 
+        tileTransform = Matrix4x4.TRS(tileTransform.GetPosition(), Quaternion.identity, Vector3.one);
         return false;
     }
 

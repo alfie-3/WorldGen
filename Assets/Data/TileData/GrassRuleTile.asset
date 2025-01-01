@@ -27,7 +27,7 @@ MonoBehaviour:
     TileTransformation: 4
   - ElementName: Terrain_CornerRuleTile
     tile: {fileID: 11400000, guid: 7c7a51ad1b73ced4499827ecfcb55013, type: 2}
-    NeighbourRules: 020000000100000000000000010000000000000000000000000000000200000002000000
+    NeighbourRules: 020000000100000002000000010000000000000002000000000000000200000002000000
     TileTransformation: 4
   - ElementName: Terrain_Singlewide
     tile: {fileID: 11400000, guid: c28633f29a1815d4f8b03bd7b7b6573f, type: 2}
