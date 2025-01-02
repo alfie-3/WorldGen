@@ -5,6 +5,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "New Rule Tile", menuName = "Tiles/New Rule Tile Data", order = 1)]
 public class RuleTileData : TileData
 {
+    public TileData DefaultTileData;
     public List<TilingRule> Rules;
 
     public static readonly Vector3Int[] NeighbourPositions =
@@ -53,7 +54,7 @@ public class RuleTileData : TileData
             }
         }
 
-        return this;
+        return DefaultTileData;
     }
 
     private void OnValidate()

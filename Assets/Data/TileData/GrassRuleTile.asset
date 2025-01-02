@@ -13,16 +13,14 @@ MonoBehaviour:
   m_Name: GrassRuleTile
   m_EditorClassIdentifier: 
   <TileId>k__BackingField: Terrain_MainRuleTile
-  <TileMesh>k__BackingField: {fileID: 1385279003812690709, guid: 61f20381a49585d48872763e244283ec, type: 3}
-  <TileMaterials>k__BackingField:
-  - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
+  DefaultTileData: {fileID: 11400000, guid: b318acaab75dc7149a9d3c33d3b3ae3b, type: 2}
   Rules:
   - ElementName: Terrain_Individual
-    tile: {fileID: 11400000, guid: 2d91dbf0002ddee49b847f1ccfade03c, type: 2}
+    tile: {fileID: 11400000, guid: ece64d5396ed7054f8346a2ad2e8d618, type: 2}
     NeighbourRules: 020000000000000002000000000000000000000002000000000000000200000002000000
     TileTransformation: 0
   - ElementName: Terrain_Edge
-    tile: {fileID: 11400000, guid: 34b4adc23c095454585158344e1376ba, type: 2}
+    tile: {fileID: 11400000, guid: 9c89c2665b4c13c4583f3a157ea9705b, type: 2}
     NeighbourRules: 0200000001000000020000000100000001000000020000000000000002000000
     TileTransformation: 4
   - ElementName: Terrain_CornerRuleTile

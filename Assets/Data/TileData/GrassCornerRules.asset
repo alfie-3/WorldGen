@@ -13,12 +13,10 @@ MonoBehaviour:
   m_Name: GrassCornerRules
   m_EditorClassIdentifier: 
   <TileId>k__BackingField: Terrain_CornerRuleTile
-  <TileMesh>k__BackingField: {fileID: -5221963080773851136, guid: 61f20381a49585d48872763e244283ec, type: 3}
-  <TileMaterials>k__BackingField:
-  - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
+  DefaultTileData: {fileID: 11400000, guid: c3e9e3638759df246bba8592d2dd0e4a, type: 2}
   Rules:
   - ElementName: Terrain_Corner
-    tile: {fileID: 11400000, guid: 8c1767a54467ac64689e8b617e1196f8, type: 2}
+    tile: {fileID: 11400000, guid: c3e9e3638759df246bba8592d2dd0e4a, type: 2}
     NeighbourRules: 020000000100000000000000010000000000000000000000000000000200000002000000
     TileTransformation: 4
   - ElementName: Terrain_Slope

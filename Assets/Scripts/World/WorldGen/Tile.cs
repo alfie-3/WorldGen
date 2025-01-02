@@ -47,28 +47,30 @@ public class Tile
 }
 
 public struct TileInfo {
-    public Vector3Int tileLocation;
-    public Matrix4x4 tileTransform;
-    public TileData tiledata;
+    public Vector3Int TileLocation;
+    public Matrix4x4 TileTransform;
+
+    public TileData TileData;
 
     public static readonly TileInfo Empty = new TileInfo(null);
 
     public TileInfo(Vector3Int tileLoc, Matrix4x4 tileTransform, TileData tileData) {
-        tileLocation = tileLoc;
-        this.tileTransform = tileTransform;
-        this.tiledata = tileData;
+        TileLocation = tileLoc;
+        this.TileTransform = tileTransform;
+        this.TileData = tileData;
     }
 
     public TileInfo(Tile tile) {
         if (tile == null) {
-            tileLocation = Vector3Int.zero;
-            tileTransform = Matrix4x4.zero;
-            tiledata = null;
+            TileLocation = Vector3Int.zero;
+            TileTransform = Matrix4x4.zero;
+            TileData = null;
             return;
         }
 
-        tileLocation = tile.tileLocation;
-        tileTransform = tile.tileTransform;
-        tiledata = tile.tileData;
+        this.TileData = tile.tileData;
+
+        TileLocation = tile.tileLocation;
+        TileTransform = tile.tileTransform;
     }
 }

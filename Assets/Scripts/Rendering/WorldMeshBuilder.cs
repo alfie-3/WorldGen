@@ -59,6 +59,7 @@ public class WorldMeshBuilder : MonoBehaviour {
         RenderMeshes();
     }
 
+    //Adds a new chunk to the tile dictionary and builds the tilset from the current tiles
     public void AddChunk(Vector2Int coord) {
         ChunkDataDict.TryAdd(coord, new ChunkData());
 
@@ -74,22 +75,26 @@ public class WorldMeshBuilder : MonoBehaviour {
         StartChunkMeshGeneration(coord);
     }
 
+    //Starts mesh generation for the given chunk coordinate
     public void StartChunkMeshGeneration(Vector2Int coord) {
         UpdateChunkMesh(coord);
     }
 
+    //Updates chunk mesh at given coordinate
     public void UpdateChunkMesh(Vector2Int chunkLoc) {
         GenerateChunkMeshData(chunkLoc);
         UpdateCollider(chunkLoc);
 
     }
 
+    //Releases chunk from rendering memory
     public void ReleaseChunk(Vector2Int chunkLoc) {
         if (ChunkDataDict.TryRemove(chunkLoc, out ChunkData chunkMeshData)) {
             Destroy(chunkMeshData.Collider);
         }
     }
 
+    //Generates a mesh per tile material by combining all the tiles using that material
     public void GenerateChunkMeshData(Vector2Int chunkPos) {
         foreach (KeyValuePair<Material, ChunkData.MaterialMeshData> materialMeshData in ChunkDataDict[chunkPos].MaterialMeshes) {
             if (!materialMeshData.Value.dirty) continue;
@@ -104,6 +109,8 @@ public class WorldMeshBuilder : MonoBehaviour {
         }
     }
 
+
+    //Caches combine instances used by chunk mesh generator
     public void CacheCombinerInstances(ChunkData.MaterialMeshData materialMeshData) {
         int arrayLength = 0;
         foreach (TileMeshInfo meshInfo in materialMeshData.TileMeshInfos) {
@@ -117,15 +124,16 @@ public class WorldMeshBuilder : MonoBehaviour {
 
         int i = 0;
         foreach (TileMeshInfo meshInfo in materialMeshData.TileMeshInfos) {
-            if (meshInfo.Transform == Matrix4x4.zero) continue;
             if (i > materialMeshData.cachedCombineInstances.Length - 1) continue;
+            if (meshInfo.Transform == Matrix4x4.zero) continue;
 
             materialMeshData.cachedCombineInstances[i].mesh = meshInfo.Mesh;
             materialMeshData.cachedCombineInstances[i].transform = meshInfo.Transform;
             i++;
         }
 
-
+        //Really hacky, but due to the multithreading sometimes the numbers dont add up
+        //Spare instances are filled with empty combine instances
         if (arrayLength > i) {
             int remainder = arrayLength - i;
 
@@ -136,6 +144,8 @@ public class WorldMeshBuilder : MonoBehaviour {
         }
     }
 
+    //Updates the colliders to the new collision mesh
+    //Creates a MeshCollider component if non is present for the chunk
     public void UpdateCollider(Vector2Int chunkLoc) {
         if (ChunkDataDict[chunkLoc].Collider != null) {
             ChunkDataDict[chunkLoc].Collider.sharedMesh = ChunkDataDict[chunkLoc].ColliderMesh;
@@ -148,6 +158,7 @@ public class WorldMeshBuilder : MonoBehaviour {
         }
     }
 
+    //Updates the previous tile to the current tile, and removes the old one from its previous position
     public void UpdateTile(Vector2Int chunkCoord, TileInfo previousData, TileInfo currentData) {
         if (!ChunkDataDict.ContainsKey(chunkCoord)) return;
 
@@ -157,38 +168,41 @@ public class WorldMeshBuilder : MonoBehaviour {
         dirtyChunkBuffer.TryAdd(chunkCoord, 0);
     }
 
+    //Removes tile from address
     public void RemoveTileData(Vector2Int chunkCoord, TileInfo tile) {
-        if (tile.tiledata == null) return;
+        BlockData blockData = tile.TileData is not IBlockData iblockData ? null : iblockData.GetBlockData();
+        if (blockData == null) return;
 
-        if (ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(tile.tiledata.TileMaterials[0], out ChunkData.MaterialMeshData chunkMatData)) {
-            chunkMatData.TileMeshInfos[tile.tileLocation.x, tile.tileLocation.y, tile.tileLocation.z] = TileMeshInfo.Empty;
+        if (ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(blockData.TileMaterials[0], out ChunkData.MaterialMeshData chunkMatData)) {
+            chunkMatData.TileMeshInfos[tile.TileLocation.x, tile.TileLocation.y, tile.TileLocation.z] = TileMeshInfo.Empty;
             chunkMatData.dirty = true;
         }
     }
 
+    //Adds new tile to new address & creates the material in the dicionary if it isnt available
     public void AddTileData(Vector2Int chunkCoord, TileInfo tile) {
-        if (tile.tiledata == null) return;
+        BlockData blockData = tile.TileData is not IBlockData iblockData ? null : iblockData.GetBlockData();
+        if (blockData == null) return;
 
-
-        if (!ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(tile.tiledata.TileMaterials[0], out ChunkData.MaterialMeshData chunkMaterialData)) {
-            ChunkDataDict[chunkCoord].MaterialMeshes.TryAdd(tile.tiledata.TileMaterials[0], new());
-            chunkMaterialData = ChunkDataDict[chunkCoord].MaterialMeshes[tile.tiledata.TileMaterials[0]];
+        if (!ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(blockData.TileMaterials[0], out ChunkData.MaterialMeshData chunkMaterialData)) {
+            ChunkDataDict[chunkCoord].MaterialMeshes.TryAdd(blockData.TileMaterials[0], new());
+            chunkMaterialData = ChunkDataDict[chunkCoord].MaterialMeshes[blockData.TileMaterials[0]];
         }
 
-        chunkMaterialData.allocatedTileMeshInfo.Mesh = tile.tiledata.TileMesh;
-        chunkMaterialData.allocatedTileMeshInfo.Transform = tile.tileTransform;
+        chunkMaterialData.allocatedTileMeshInfo.Mesh = blockData.TileMesh;
+        chunkMaterialData.allocatedTileMeshInfo.Transform = tile.TileTransform;
 
-        chunkMaterialData.TileMeshInfos[tile.tileLocation.x, tile.tileLocation.y, tile.tileLocation.z] = chunkMaterialData.allocatedTileMeshInfo;
+        chunkMaterialData.TileMeshInfos[tile.TileLocation.x, tile.TileLocation.y, tile.TileLocation.z] = chunkMaterialData.allocatedTileMeshInfo;
 
         chunkMaterialData.dirty = true;
     }
 
-
-
+    //Sets chunk to dirty if it should be updated
     public void SetChunkDirty(Vector2Int chunkLoc) {
         dirtyChunkBuffer.TryAdd(chunkLoc, 0);
     }
 
+    //Render each mesh for each chunk and each material
     public void RenderMeshes() {
         foreach (KeyValuePair<Vector2Int, ChunkData> ChunkMeshPair in ChunkDataDict) {
             if (Vector2Int.Distance(ChunkMeshPair.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }

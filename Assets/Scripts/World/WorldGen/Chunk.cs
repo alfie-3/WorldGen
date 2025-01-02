@@ -14,8 +14,6 @@ public class Chunk
     public static Action<Vector2Int> RefreshChunk = delegate { };
 
     public static Action<Vector2Int, TileInfo, TileInfo> OnTileUpdate = delegate { };
-    public static Action<Vector2Int, TileInfo> OnTileCreate = delegate { };
-    public static Action<Vector2Int, TileInfo> OnTileRemove = delegate { };
 
     private Tile GetTile(Vector3Int coord)
     {
@@ -45,7 +43,7 @@ public class Chunk
 
         Tiles[localCoord.x, coord.y, localCoord.z] = new(tileData, coord);
 
-        OnTileUpdate.Invoke(ChunkLocation, prevTileInfo, new TileInfo(Tiles[localCoord.x, coord.y, localCoord.z]));
+        OnTileUpdate.Invoke(ChunkLocation, prevTileInfo, new TileInfo (Tiles[localCoord.x, coord.y, localCoord.z]));
     }
 
     /// <summary>

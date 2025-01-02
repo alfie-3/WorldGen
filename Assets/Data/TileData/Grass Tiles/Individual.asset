@@ -9,11 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 628c35ffa8d75d444b81a1eb00731cdf, type: 3}
+  m_Script: {fileID: 11500000, guid: 7939e3810d79b554197f660cbe89bff0, type: 3}
   m_Name: Individual
   m_EditorClassIdentifier: 
   <TileId>k__BackingField: Terrain_Individual
-  <TileMesh>k__BackingField: {fileID: 4330267867807353109, guid: 61f20381a49585d48872763e244283ec, type: 3}
-  <TileMaterials>k__BackingField:
-  - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
-  - {fileID: 2100000, guid: a2444da620b52c040be4af8b80d920f7, type: 2}
+  <BlockData>k__BackingField:
+    <TileMesh>k__BackingField: {fileID: 4330267867807353109, guid: 61f20381a49585d48872763e244283ec, type: 3}
+    <TileMaterials>k__BackingField:
+    - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
+    <Fullness>k__BackingField: 0
