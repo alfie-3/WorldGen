@@ -18,7 +18,7 @@ public class WorldGeneration : MonoBehaviour
 
     //Chunk Generation
     public const int CHUNK_SIZE = 16;
-    public static int ChunkGenerationRange = 5;
+    public static int ChunkGenerationRange = 8;
     public static int ChunkReleaseRange = 20;
 
     //Terrain Params

@@ -128,7 +128,9 @@ Material:
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
+    - _Multiplication: -0.0003
     - _OcclusionStrength: 1
+    - _ParabolaPower: 0
     - _Parallax: 0.02
     - _Power: 3.94
     - _QueueControl: 0
