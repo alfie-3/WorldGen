@@ -69,7 +69,7 @@ public class CameraController : MonoBehaviour {
         //Move camera
         Vector2 movementVector = InputActions.Default.MoveCam.ReadValue<Vector2>();
         Vector3 newMoveVector = movementVector.x * transform.right + movementVector.y * transform.forward;
-        newPos += newMoveVector * sensitivity;
+        newPos += newMoveVector * sensitivity * Time.deltaTime;
 
         //Rotate Camera
         Vector2 rotationVector = InputActions.Default.SpinCam.ReadValue<Vector2>();
