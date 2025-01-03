@@ -26,12 +26,10 @@ public class Chunk
         return Tiles[coord.x, coord.y, coord.z];
     }
 
-    /// <summary>
-    /// Sets a tile within a specificed GLOBAL coordiate to the provided tile data.
-    /// </summary>
-    public void SetTile(TileData tileData, Vector3Int coord)
+    public void SetTile(TileData tileData, Vector3Int coord, COORD_TYPE coordType = COORD_TYPE.GLOBAL)
     {
-        Vector3Int localCoord = WorldUtils.TileCoordinateGlobalToLocal(coord);
+        Vector3Int globalCoord = coordType == COORD_TYPE.GLOBAL ? coord : WorldUtils.TileCoordinateLocalToGlobal(coord, ChunkLocation);
+        Vector3Int localCoord = coordType == COORD_TYPE.LOCAL ? coord : WorldUtils.TileCoordinateGlobalToLocal(coord);
 
         if (CheckOutOfChunkRange(localCoord))
         {
@@ -39,16 +37,13 @@ public class Chunk
             return;
         }
 
-        TileInfo prevTileInfo = new(Tiles[localCoord.x, coord.y, localCoord.z]);
+        TileInfo prevTileInfo = new(Tiles[localCoord.x, localCoord.y, localCoord.z]);
 
-        Tiles[localCoord.x, coord.y, localCoord.z] = new(tileData, coord);
+        Tiles[localCoord.x, localCoord.y, localCoord.z] = new(tileData, globalCoord);
 
-        OnTileUpdate.Invoke(ChunkLocation, prevTileInfo, new TileInfo (Tiles[localCoord.x, coord.y, localCoord.z]));
+        OnTileUpdate.Invoke(ChunkLocation, prevTileInfo, new TileInfo (Tiles[localCoord.x, localCoord.y, localCoord.z]));
     }
 
-    /// <summary>
-    /// Clears a tile within a specificed GLOBAL coordiate.
-    /// </summary>
     public void ClearTile(Vector3Int coord)
     {
         coord = WorldUtils.TileCoordinateGlobalToLocal(coord);

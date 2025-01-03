@@ -75,16 +75,26 @@ public class WorldUtils : MonoBehaviour
         return new(Math.Abs(global.x % WorldGeneration.CHUNK_SIZE), global.y, Math.Abs(global.z % WorldGeneration.CHUNK_SIZE));
     }
 
+    public static Vector3Int TileCoordinateLocalToGlobal(Vector3Int local, Vector2Int chunkCoordinate)
+    {
+        return new Vector3Int(local.x + (chunkCoordinate.x * WorldGeneration.CHUNK_SIZE), local.y, local.z + (chunkCoordinate.y * WorldGeneration.CHUNK_SIZE));
+    }
+
     public static bool IsTileCoordinateValid(Vector3Int coord)
     {
-        if (coord.y > WorldGeneration.MaxTerrainHeight - 1) return false;
+        if (coord.y > WorldGeneration.MaxTerrainGeneration) return false;
 
         return true;
     }
 
+    /// <summary>
+    /// Gets top tile using global tile coordinate
+    /// </summary>
+    /// <param name="sampleTileLoc"></param>
+    /// <returns></returns>
     public static Vector3Int GetTopTileLocation(Vector3Int sampleTileLoc)
     {
-        for (int i = WorldGeneration.MaxTerrainHeight - 1; i > 0; i--)
+        for (int i = WorldGeneration.MaxTerrainGeneration + 1; i > 0; i--)
         {
             if (TryGetTile(new(sampleTileLoc.x, i, sampleTileLoc.z), out Tile tile))
             {

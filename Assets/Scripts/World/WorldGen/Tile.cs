@@ -46,6 +46,12 @@ public class Tile
     }
 }
 
+public enum COORD_TYPE
+{
+    LOCAL,
+    GLOBAL
+}
+
 public struct TileInfo {
     public Vector3Int TileLocation;
     public Matrix4x4 TileTransform;

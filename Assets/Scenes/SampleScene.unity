@@ -630,9 +630,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3f4406dfb923fe49b8ea3e0de0cc03c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  grass: {fileID: 11400000, guid: 693a9d0160d78594eb70695e6b153313, type: 2}
-  noiseGenerator: {fileID: 11400000, guid: f50be40f3a69f7c4c88731ceef6e122f, type: 2}
+  terrainRuleTile: {fileID: 11400000, guid: 693a9d0160d78594eb70695e6b153313, type: 2}
+  terrainFeatures:
+  - {fileID: 11400000, guid: b77ace3303ccc66478ffdc752e875262, type: 2}
+  primaryGenerator: {fileID: 11400000, guid: f50be40f3a69f7c4c88731ceef6e122f, type: 2}
+  featuresGenerator: {fileID: 11400000, guid: 87e80e184358219469c469d6cc4f608f, type: 2}
   noiseIsland: {fileID: 11400000, guid: 4308316e340732a4c88d951639d99fc5, type: 2}
+  featureFrequency: 0.62
 --- !u!4 &1286674113
 Transform:
   m_ObjectHideFlags: 0
@@ -911,6 +915,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1855839547}
+  - component: {fileID: 1855839548}
   m_Layer: 0
   m_Name: EntityManagement
   m_TagString: Untagged
@@ -933,6 +938,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1855839548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1855839546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7972d5a0a794a164d804b2680b14a47e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &1923664074 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4235671179490301007, guid: 7d284ac83419527439ed6421789939fa, type: 3}

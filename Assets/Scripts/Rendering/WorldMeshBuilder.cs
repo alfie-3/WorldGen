@@ -18,7 +18,7 @@ public class WorldMeshBuilder : MonoBehaviour {
             public bool dirty;
 
             public TileMeshInfo allocatedTileMeshInfo = new();
-            public TileMeshInfo[,,] TileMeshInfos = new TileMeshInfo[WorldGeneration.CHUNK_SIZE, WorldGeneration.MaxTerrainHeight, WorldGeneration.CHUNK_SIZE];
+            public TileMeshInfo[,,] TileMeshInfos = new TileMeshInfo[WorldGeneration.CHUNK_SIZE, WorldGeneration.MaxTerrainGeneration, WorldGeneration.CHUNK_SIZE];
             public CombineInstance[] cachedCombineInstances = new CombineInstance[0];
         }
     }

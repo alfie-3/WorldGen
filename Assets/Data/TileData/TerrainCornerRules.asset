@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ceb47cd920362314b95ba0cd0bb35ac2, type: 3}
-  m_Name: GrassCornerRules
+  m_Name: TerrainCornerRules
   m_EditorClassIdentifier: 
   <TileId>k__BackingField: Terrain_CornerRuleTile
   DefaultTileData: {fileID: 11400000, guid: c3e9e3638759df246bba8592d2dd0e4a, type: 2}
