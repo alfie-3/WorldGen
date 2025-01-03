@@ -172,6 +172,9 @@ public class WorldGeneration : MonoBehaviour
                 if (featuresGenerator.GetNoiseClamped(sampleLoc) < featureFrequency) continue;
 
                 Vector3Int topTileLoc = WorldUtils.GetTopTileLocation(new(sampleLoc.x, 0, sampleLoc.y));
+
+                if (!WorldUtils.TryGetTile(topTileLoc, out _)) continue;
+
                 topTileLoc.y++;
 
                 System.Random random = new System.Random(Thread.CurrentThread.ManagedThreadId);

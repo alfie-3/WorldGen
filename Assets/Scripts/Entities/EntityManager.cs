@@ -1,4 +1,4 @@
-using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +6,7 @@ public class EntityManager : MonoBehaviour
 {
     public HashSet<EntityContainer> entities = new HashSet<EntityContainer>();
 
-    public Queue<TileEntityCreationInfo> EntityCreationBuffer = new();
+    public ConcurrentQueue<TileEntityCreationInfo> EntityCreationBuffer = new();
 
     private void OnEnable()
     {
@@ -15,9 +15,10 @@ public class EntityManager : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (EntityCreationBuffer.Count > 0)
+        while (EntityCreationBuffer.Count > 0)
         {
-            CreateTileEntity(EntityCreationBuffer.Dequeue());
+            if (EntityCreationBuffer.TryDequeue(out TileEntityCreationInfo result))
+                CreateTileEntity(result);
         }
     }
 
@@ -36,11 +37,10 @@ public class EntityManager : MonoBehaviour
 
     public void CreateTileEntity(TileEntityCreationInfo creationData)
     {
-        EntityContainer entityContainer = Instantiate(creationData.staticEntityData.EntityPrefab.gameObject, 
-            creationData.tileInfo.TileTransform.GetPosition() + creationData.staticEntityData.EntityPrefab.transform.position, 
-            Quaternion.identity).GetComponent<EntityContainer>();
+        InstantiateAsync(creationData.staticEntityData.EntityPrefab.gameObject,
+            creationData.tileInfo.TileTransform.GetPosition() + creationData.staticEntityData.EntityPrefab.transform.position,
+            Quaternion.identity);
 
-        entities.Add(entityContainer);
     }
 }
 
