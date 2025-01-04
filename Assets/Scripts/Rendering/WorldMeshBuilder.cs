@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ public class WorldMeshBuilder : MonoBehaviour {
             public bool dirty;
 
             public TileMeshInfo allocatedTileMeshInfo = new();
-            public TileMeshInfo[,,] TileMeshInfos = new TileMeshInfo[WorldGeneration.CHUNK_SIZE, WorldGeneration.MaxTerrainGeneration, WorldGeneration.CHUNK_SIZE];
+            public TileMeshInfo[,,] TileMeshInfos = new TileMeshInfo[WorldGeneration.CHUNK_SIZE, WorldGeneration.MaxTerrainHeight, WorldGeneration.CHUNK_SIZE];
             public CombineInstance[] cachedCombineInstances = new CombineInstance[0];
         }
     }
@@ -41,14 +42,14 @@ public class WorldMeshBuilder : MonoBehaviour {
 
     private void FixedUpdate() {
         if (chunkGenerationBuffer.Any())
-            AddChunk(chunkGenerationBuffer.Dequeue());
+            StartAddChunk(chunkGenerationBuffer.Dequeue());
 
         //Buffers out chunk updates across multiple frames to prevent stuterring
         if (dirtyChunkBuffer.Any()) {
             KeyValuePair<Vector2Int, byte> randomHashet = dirtyChunkBuffer.ElementAt(randomPicker.Next(dirtyChunkBuffer.Count));
             if (dirtyChunkBuffer.Contains(randomHashet)) {
                 if (ChunkDataDict.ContainsKey(randomHashet.Key))
-                    StartChunkMeshGeneration(randomHashet.Key);
+                    StartUpdateChunk(randomHashet.Key);
 
                 dirtyChunkBuffer.Remove(randomHashet.Key, out _);
             }
@@ -59,10 +60,27 @@ public class WorldMeshBuilder : MonoBehaviour {
         RenderMeshes();
     }
 
-    //Adds a new chunk to the tile dictionary and builds the tilset from the current tiles
-    public void AddChunk(Vector2Int coord) {
-        ChunkDataDict.TryAdd(coord, new ChunkData());
+    public void StartAddChunk(Vector2Int chunkLoc)
+    {
+        ChunkDataDict.TryAdd(chunkLoc, new ChunkData());
+        ChunkData chunkData = ChunkDataDict[chunkLoc];
 
+        chunkData.generationRoutine = StartCoroutine(AddChunk(chunkLoc));
+    }
+
+    public void StartUpdateChunk(Vector2Int chunkLoc)
+    {
+        if (ChunkDataDict.TryGetValue(chunkLoc, out ChunkData chunkData))
+        {
+            if (chunkData.generationRoutine != null)
+                StopCoroutine(chunkData.generationRoutine);
+
+            chunkData.generationRoutine = StartCoroutine(UpdateChunkMesh(chunkLoc));
+        }
+    }
+
+    //Adds a new chunk to the tile dictionary and builds the tilset from the current tiles
+    public IEnumerator AddChunk(Vector2Int coord) {
         if (WorldUtils.TryGetChunk(coord, out Chunk chunk)) {
             foreach (Tile tile in chunk.Tiles) {
                 if (tile == null) continue;
@@ -72,19 +90,17 @@ public class WorldMeshBuilder : MonoBehaviour {
             }
         }
 
-        StartChunkMeshGeneration(coord);
-    }
+        yield return UpdateChunkMesh(coord);
 
-    //Starts mesh generation for the given chunk coordinate
-    public void StartChunkMeshGeneration(Vector2Int coord) {
-        UpdateChunkMesh(coord);
+        yield return null;
     }
 
     //Updates chunk mesh at given coordinate
-    public void UpdateChunkMesh(Vector2Int chunkLoc) {
+    public IEnumerator UpdateChunkMesh(Vector2Int chunkLoc) {
         GenerateChunkMeshData(chunkLoc);
         UpdateCollider(chunkLoc);
 
+        yield return null;
     }
 
     //Releases chunk from rendering memory
@@ -105,6 +121,7 @@ public class WorldMeshBuilder : MonoBehaviour {
             Mesh mesh = new Mesh();
             mesh.CombineMeshes(materialMeshData.Value.cachedCombineInstances, true, true);
             mesh.Optimize();
+            mesh.RecalculateNormals();
             materialMeshData.Value.mesh = mesh;
         }
     }
@@ -190,7 +207,7 @@ public class WorldMeshBuilder : MonoBehaviour {
         }
 
         chunkMaterialData.allocatedTileMeshInfo.Mesh = blockData.TileMesh;
-        chunkMaterialData.allocatedTileMeshInfo.Transform = tile.TileTransform;
+        chunkMaterialData.allocatedTileMeshInfo.Transform = Matrix4x4.TRS(tile.TileLocation, Tile.GetRotation(tile.rotation), Vector3.one);
 
         chunkMaterialData.TileMeshInfos[tile.TileLocation.x, tile.TileLocation.y, tile.TileLocation.z] = chunkMaterialData.allocatedTileMeshInfo;
 
@@ -205,7 +222,7 @@ public class WorldMeshBuilder : MonoBehaviour {
     //Render each mesh for each chunk and each material
     public void RenderMeshes() {
         foreach (KeyValuePair<Vector2Int, ChunkData> ChunkMeshPair in ChunkDataDict) {
-            if (Vector2Int.Distance(ChunkMeshPair.Key, WorldUtils.GetChunkLocation(WorldGeneration.PlayerTransform.position)) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
+            if (Vector2Int.Distance(ChunkMeshPair.Key, WorldUtils.GetChunkLocation(Vector3Int.RoundToInt(WorldGeneration.PlayerTransform.position))) > WorldGeneration.ChunkGenerationRange + 1) { continue; }
 
             foreach (KeyValuePair<Material, ChunkData.MaterialMeshData> materialMeshData in ChunkMeshPair.Value.MaterialMeshes) {
                 if (materialMeshData.Value.mesh == null) continue;
@@ -216,7 +233,7 @@ public class WorldMeshBuilder : MonoBehaviour {
                     shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
                 };
 
-                Matrix4x4 renderPos = Matrix4x4.Translate(Vector3.zero);
+                Matrix4x4 renderPos = Matrix4x4.Translate(new(ChunkMeshPair.Key.x * WorldGeneration.CHUNK_SIZE, 0, ChunkMeshPair.Key.y * WorldGeneration.CHUNK_SIZE));
                 Graphics.RenderMesh(renderParams, materialMeshData.Value.mesh, 0, renderPos);
             }
         }

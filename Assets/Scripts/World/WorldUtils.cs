@@ -72,7 +72,7 @@ public class WorldUtils : MonoBehaviour
 
     public static Vector3Int TileCoordinateGlobalToLocal(Vector3Int global)
     {
-        return new(Math.Abs(global.x % WorldGeneration.CHUNK_SIZE), global.y, Math.Abs(global.z % WorldGeneration.CHUNK_SIZE));
+        return new(Math.Abs(RemaindingMod(global.x, WorldGeneration.CHUNK_SIZE)), global.y, RemaindingMod(global.z, WorldGeneration.CHUNK_SIZE));
     }
 
     public static Vector3Int TileCoordinateLocalToGlobal(Vector3Int local, Vector2Int chunkCoordinate)
@@ -98,26 +98,29 @@ public class WorldUtils : MonoBehaviour
         {
             if (TryGetTile(new(sampleTileLoc.x, i, sampleTileLoc.z), out Tile tile))
             {
-                return tile.globalTileLocation;
+                Vector2Int chunkLoc = GetChunkLocation(sampleTileLoc);
+                return TileCoordinateLocalToGlobal(tile.TileLocationVect3, chunkLoc);
             }
         }
 
         return sampleTileLoc;
     }
 
-    public static Vector2Int GetChunkLocation(Vector3 location)
+    public static Vector2Int GetChunkLocation(Vector3Int location)
     {
-        return Vector2Int.FloorToInt(new Vector2(location.x, location.z) / WorldGeneration.CHUNK_SIZE);
-    }
+        Vector2Int chunkLoc = new Vector2Int(RoundInt((int)location.x, WorldGeneration.CHUNK_SIZE), RoundInt((int)location.z, WorldGeneration.CHUNK_SIZE));
 
-    public static Vector3Int RoundVector3(Vector3 location)
-    {
-        return new((int)location.x, (int)location.y, (int)location.z);
+        return chunkLoc;
     }
 
     public static int RoundInt(int a, int b)
     {
         int res = a / b;
         return (a < 0 && a != b * res) ? res - 1 : res;
+    }
+
+    static int RemaindingMod(int x, int m)
+    {
+        return (x % m + m) % m;
     }
 }

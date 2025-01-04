@@ -37,9 +37,11 @@ public class EntityManager : MonoBehaviour
 
     public void CreateTileEntity(TileEntityCreationInfo creationData)
     {
+        Vector3Int chunkOffset = new(creationData.chunkCoord.x * WorldGeneration.CHUNK_SIZE, 0, creationData.chunkCoord.y * WorldGeneration.CHUNK_SIZE);
+
         InstantiateAsync(creationData.staticEntityData.EntityPrefab.gameObject,
-            creationData.tileInfo.TileTransform.GetPosition() + creationData.staticEntityData.EntityPrefab.transform.position,
-            Quaternion.identity);
+            creationData.tileInfo.TileLocation + creationData.staticEntityData.EntityPrefab.transform.position + chunkOffset,
+            Tile.GetRotation(creationData.tileInfo.rotation));
 
     }
 }

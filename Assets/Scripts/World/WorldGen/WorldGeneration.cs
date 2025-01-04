@@ -32,8 +32,8 @@ public class WorldGeneration : MonoBehaviour
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
     //Terrain Params
-    public const int MaxTerrainGeneration = 4;
-    public const int MaxTerrainHeight = 6;
+    public const int MaxTerrainGeneration = 5;
+    public const int MaxTerrainHeight = 8;
 
     //Chunk generation events
     public static Action<Vector2Int> ChunkReady = delegate { };
@@ -50,23 +50,23 @@ public class WorldGeneration : MonoBehaviour
 
     public void Awake()
     {
-        PlayerTransform = Camera.main.transform;
+        PlayerTransform = GameObject.FindGameObjectWithTag("Player").transform;
     }
 
     // Start is called before the first frame update
-    async UniTaskVoid Start()
+    public void Start()
     {
-        await GenerateChunks();
+        GenerateChunks();
     }
 
-    public async UniTaskVoid FixedUpdate()
+    public void FixedUpdate()
     {
-        await GenerateChunks();
+        GenerateChunks();
         CheckReleaseChunks();
     }
 
     [ContextMenu("Regenerate")]
-    async UniTaskVoid Regenerate()
+    public void Regenerate()
     {
         foreach (Transform child in transform)
             Destroy(child.gameObject);
@@ -75,14 +75,14 @@ public class WorldGeneration : MonoBehaviour
         primaryGenerator.Seed = (int)DateTime.Now.Ticks;
         noiseIsland.Seed = (int)DateTime.Now.Ticks;
 
-        await GenerateChunks();
+        GenerateChunks();
     }
 
     //Generated chunks around the player location
     //When a chunk is being generated it is put on the thread pool to devide the load between multiple CPU cores
-    async UniTask GenerateChunks()
+    public void GenerateChunks()
     {
-        Vector2Int playerChunkLoc = WorldUtils.GetChunkLocation(PlayerTransform.position);
+        Vector2Int playerChunkLoc = WorldUtils.GetChunkLocation(Vector3Int.RoundToInt(PlayerTransform.position));
 
         for (int x = playerChunkLoc.x - ChunkGenerationRange; x < playerChunkLoc.x + ChunkGenerationRange; x++)
         {
@@ -94,14 +94,13 @@ public class WorldGeneration : MonoBehaviour
 
                 if (CreateChunk(chunkLoc, out Chunk newChunk))
                 {
-                    await UniTask.RunOnThreadPool(() => GenerateChunk(newChunk), cancellationToken: tokenSource.Token);
-                    ChunkReady.Invoke(chunkLoc);
+                    UniTask task = UniTask.RunOnThreadPool(() => GenerateChunk(newChunk, (chunLoc) => { ChunkReady.Invoke(chunkLoc); }), false, cancellationToken: tokenSource.Token);
                 }
             }
         }
     }
 
-    public Chunk GenerateChunk(Chunk chunk)
+    public Chunk GenerateChunk(Chunk chunk, Action<Vector2Int> chunkReady)
     {
         //Create tiles in chunk
         GenerateTiles(chunk);
@@ -113,17 +112,19 @@ public class WorldGeneration : MonoBehaviour
         foreach (Tile tile in chunk.Tiles)
         {
             if (tile == null) continue;
+            Vector3Int globalTileLoc = WorldUtils.TileCoordinateLocalToGlobal(tile.TileLocationVect3, chunk.ChunkLocation);
 
-            tile.RefreshTile();
+            tile.RefreshTile(globalTileLoc);
 
-            if (tile.globalTileLocation.x % CHUNK_SIZE <= 1 || tile.globalTileLocation.z % CHUNK_SIZE <= 1)
+            if (globalTileLoc.x % CHUNK_SIZE <= 1 || globalTileLoc.z % CHUNK_SIZE <= 1)
             {
-                WorldManagement.UpdateAdjacentTiles(tile.globalTileLocation);
+                WorldManagement.UpdateAdjacentTiles(globalTileLoc);
             }
         }
 
         GenerateTerrainFeatures(chunk);
 
+        chunkReady(chunk.ChunkLocation);
         return chunk;
     }
 
@@ -169,11 +170,16 @@ public class WorldGeneration : MonoBehaviour
                 if (chunk.Tiles[x, 0, z] == null) continue;
 
                 Vector2Int sampleLoc = new Vector2Int(x + (chunk.ChunkLocation.x * CHUNK_SIZE), z + (chunk.ChunkLocation.y * CHUNK_SIZE));
-                if (featuresGenerator.GetNoiseClamped(sampleLoc) < featureFrequency) continue;
+                if (featuresGenerator.GetNoiseClamped(sampleLoc) < 1 - featureFrequency) continue;
 
                 Vector3Int topTileLoc = WorldUtils.GetTopTileLocation(new(sampleLoc.x, 0, sampleLoc.y));
 
-                if (!WorldUtils.TryGetTile(topTileLoc, out _)) continue;
+                if (!WorldUtils.TryGetTile(topTileLoc, out Tile tile)) continue;
+
+                BlockData blockData = tile.tileData is not IBlockData iblockData ? null : iblockData.GetBlockData();
+
+                if (blockData == null) continue;
+                if (blockData.Fullness != TileFullness.Full) continue;
 
                 topTileLoc.y++;
 
@@ -201,7 +207,7 @@ public class WorldGeneration : MonoBehaviour
     {
         foreach (Vector2Int loc in ChunkDict.Keys)
         {
-            if (Vector2Int.Distance(WorldUtils.GetChunkLocation(PlayerTransform.position), ChunkDict[loc].ChunkLocation) > ChunkReleaseRange)
+            if (Vector2Int.Distance(WorldUtils.GetChunkLocation(Vector3Int.RoundToInt(PlayerTransform.position)), ChunkDict[loc].ChunkLocation) > ChunkReleaseRange)
             {
                 ChunkDict.Remove(loc, out Chunk value);
                 ChunkReleased.Invoke(loc);

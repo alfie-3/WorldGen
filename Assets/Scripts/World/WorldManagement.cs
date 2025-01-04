@@ -10,7 +10,7 @@ public class WorldManagement : MonoBehaviour
         if (WorldUtils.TryGetTile(tileLocation, out Tile tile))
         {
             if (!placeOnNextVerticalTile)
-                tile.SetTile(tileData);
+                tile.SetTile(tileData, tileLocation);
             else
             {
                 tileLocation.y++;
@@ -47,9 +47,16 @@ public class WorldManagement : MonoBehaviour
     {
         for (int i = 0; i < RuleTileData.NeighbourPositions.Length; i++)
         {
-            if (WorldUtils.TryGetTile(coordinate + RuleTileData.NeighbourPositions[i], out Tile tile))
+            Vector3Int refTileCoordinate = coordinate + RuleTileData.NeighbourPositions[i];
+
+            if (WorldUtils.TryGetTile(refTileCoordinate, out Tile tile))
             {
-                tile.RefreshTile();
+                TileInfo prevTileInfo = new(tile);
+
+                tile.RefreshTile(refTileCoordinate);
+
+                Chunk.OnTileUpdate.Invoke(WorldUtils.GetChunkLocation(refTileCoordinate), prevTileInfo, new TileInfo(tile));
+                Chunk.RefreshChunk.Invoke(WorldUtils.GetChunkLocation(refTileCoordinate));
             }
         }
     }

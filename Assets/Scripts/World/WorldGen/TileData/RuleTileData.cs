@@ -25,7 +25,6 @@ public class RuleTileData : TileData
 
     };
 
-
     public int[] GetNeighbours(Vector3Int location)
     {
         int[] neighbours = new int[NeighbourPositions.Length];
@@ -34,7 +33,9 @@ public class RuleTileData : TileData
         {
             if (WorldUtils.TryGetTile(location + NeighbourPositions[i], out Tile tile))
             {
-                neighbours[i] = TilingRule.Neighbour.TilePresent;
+                if (tile.tileData is IBlockData)
+                    neighbours[i] = TilingRule.Neighbour.TilePresent;
+                else neighbours[i] = TilingRule.Neighbour.NoTile;
             }
             else neighbours[i] = TilingRule.Neighbour.NoTile;
         }
@@ -42,15 +43,15 @@ public class RuleTileData : TileData
         return neighbours;
     }
 
-    public override TileData GetTileData(Vector3Int position, ref Matrix4x4 tileTransform)
+    public override TileData GetTileData(Vector3Int position, ref byte rotation)
     {
         int[] neighbours = GetNeighbours(position);
 
         foreach (var rule in Rules)
         {
-            if (rule.CheckReturnTile(neighbours, out TileData data, ref tileTransform))
+            if (rule.CheckReturnTile(neighbours, out TileData data, ref rotation))
             {
-                return data.GetTileData(position, ref tileTransform);
+                return data.GetTileData(position, ref rotation);
             }
         }
 
@@ -86,15 +87,17 @@ public class TilingRule
 
             if (CachedNeighourRulesDict != null) return CachedNeighourRulesDict;
 
-            CachedNeighourRulesDict = new Dictionary<Vector3Int, int>();
+            Dictionary<Vector3Int, int> cachedNeighourRulesDict = new Dictionary<Vector3Int, int>();
+
             for (int i = 0; i < RuleTileData.NeighbourPositions.Length; i++)
             {
-                if (i > NeighbourRules.Count-1)
-                    CachedNeighourRulesDict.Add(RuleTileData.NeighbourPositions[i], Neighbour.Ignore);
+                if (i > NeighbourRules.Count - 1)
+                    cachedNeighourRulesDict.Add(RuleTileData.NeighbourPositions[i], Neighbour.Ignore);
                 else
-                    CachedNeighourRulesDict.Add(RuleTileData.NeighbourPositions[i], NeighbourRules[i]);
+                    cachedNeighourRulesDict.Add(RuleTileData.NeighbourPositions[i], NeighbourRules[i]);
             }
 
+            CachedNeighourRulesDict = cachedNeighourRulesDict;
             return CachedNeighourRulesDict;
         }
     }
@@ -123,7 +126,7 @@ public class TilingRule
         public const int Ignore = 2;
     }
 
-    public bool CheckReturnTile(int[] neighbours, out TileData newData, ref Matrix4x4 tileTransform)
+    public bool CheckReturnTile(int[] neighbours, out TileData newData, ref byte rotation)
     {
         newData = tile;
 
@@ -154,14 +157,21 @@ public class TilingRule
                 {
                     if (CheckRotationalTileMatch(neighbours, angle))
                     {
-                        tileTransform = Matrix4x4.TRS(tileTransform.GetPosition(), Quaternion.Euler(0f, -angle, 0f), Vector3.one);
+                        rotation = angle switch
+                        {
+                            0 => 0,
+                            270 => 1,
+                            180 => 2,
+                            90 => 3,
+                            _ => 0,
+                        };
                         return true;
                     }
                 }
                 break;
         }
 
-        tileTransform = Matrix4x4.TRS(tileTransform.GetPosition(), Quaternion.identity, Vector3.one);
+        rotation = 0;
         return false;
     }
 

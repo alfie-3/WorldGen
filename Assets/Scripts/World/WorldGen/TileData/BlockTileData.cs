@@ -9,7 +9,7 @@ public class BlockTileData : TileData, IBlockData
 
     public BlockData GetBlockData() { return BlockData; }
 
-    public override TileData GetTileData(Vector3Int position, ref Matrix4x4 tileTransform) { return this; }
+    public override TileData GetTileData(Vector3Int position, ref byte rotation) { return this; }
 }
 
 [System.Serializable]

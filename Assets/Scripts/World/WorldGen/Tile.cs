@@ -10,39 +10,35 @@ public class Tile
     public TileData BaseTileData {  get; private set; }
     public TileData tileData;
 
-    public Vector3Int tileLocation;
-    public Vector3Int globalTileLocation;
+    public byte[] tileLocation = new byte[3];
+    public byte rotation = 0;
 
-    public Matrix4x4 tileTransform = Matrix4x4.identity;
+    public Vector3Int TileLocationVect3 => Vector3Byte.ByteToVector3(tileLocation);
 
     public Tile(TileData tileData, Vector3Int globalLocation)
     {
-        BaseTileData = tileData;    
+        BaseTileData = tileData;
+        Vector3Byte.Vector3ToByte(WorldUtils.TileCoordinateGlobalToLocal(globalLocation), ref tileLocation);
 
-        //Tile needs to know its global location to perform certain checks
-        tileLocation = WorldUtils.TileCoordinateGlobalToLocal(globalLocation);
-        globalTileLocation = globalLocation;
-
-        tileTransform = Matrix4x4.Translate(globalTileLocation);
-
-        this.tileData = BaseTileData.GetTileData(globalTileLocation, ref tileTransform);
+        this.tileData = BaseTileData.GetTileData(globalLocation, ref rotation);
 
     }
 
-    public void SetTile(TileData tileData)
+    public void SetTile(TileData tileData, Vector3Int globalLocation)
     {
         BaseTileData = tileData;
-        this.tileData = BaseTileData.GetTileData(globalTileLocation, ref tileTransform);
+        this.tileData = BaseTileData.GetTileData(globalLocation, ref rotation);
     }
 
-    public void RefreshTile()
+    public void RefreshTile(Vector3Int globalLocation)
     {
-        TileInfo prevTileInfo = new(this);
+        SetTile(BaseTileData, globalLocation);
+    }
 
-        SetTile(BaseTileData);
-
-        Chunk.OnTileUpdate.Invoke(WorldUtils.GetChunkLocation(globalTileLocation), prevTileInfo, new TileInfo(this));
-        Chunk.RefreshChunk.Invoke(WorldUtils.GetChunkLocation(globalTileLocation));
+    public static Quaternion GetRotation(byte rotationByte)
+    {
+        float angle = (float)rotationByte * 90;
+        return Quaternion.Euler(new(0, angle, 0));
     }
 }
 
@@ -54,29 +50,29 @@ public enum COORD_TYPE
 
 public struct TileInfo {
     public Vector3Int TileLocation;
-    public Matrix4x4 TileTransform;
+    public byte rotation;
 
     public TileData TileData;
 
     public static readonly TileInfo Empty = new TileInfo(null);
 
-    public TileInfo(Vector3Int tileLoc, Matrix4x4 tileTransform, TileData tileData) {
+    public TileInfo(Vector3Int tileLoc, byte rotation, TileData tileData) {
         TileLocation = tileLoc;
-        this.TileTransform = tileTransform;
+        this.rotation = rotation;
         this.TileData = tileData;
     }
 
     public TileInfo(Tile tile) {
         if (tile == null) {
             TileLocation = Vector3Int.zero;
-            TileTransform = Matrix4x4.zero;
+            rotation = 0;
             TileData = null;
             return;
         }
 
         this.TileData = tile.tileData;
 
-        TileLocation = tile.tileLocation;
-        TileTransform = tile.tileTransform;
+        TileLocation = Vector3Byte.ByteToVector3(tile.tileLocation);
+        rotation = tile.rotation;
     }
 }
