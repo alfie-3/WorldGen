@@ -210,7 +210,12 @@ public class WorldMeshBuilder : MonoBehaviour {
             foreach (KeyValuePair<Material, ChunkData.MaterialMeshData> materialMeshData in ChunkMeshPair.Value.MaterialMeshes) {
                 if (materialMeshData.Value.mesh == null) continue;
 
-                RenderParams renderParams = new(materialMeshData.Key);
+                RenderParams renderParams = new(materialMeshData.Key)
+                {
+                    receiveShadows = true,
+                    shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On
+                };
+
                 Matrix4x4 renderPos = Matrix4x4.Translate(Vector3.zero);
                 Graphics.RenderMesh(renderParams, materialMeshData.Value.mesh, 0, renderPos);
             }
