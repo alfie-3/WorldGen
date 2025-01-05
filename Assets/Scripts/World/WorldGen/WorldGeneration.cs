@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
@@ -27,7 +28,7 @@ public class WorldGeneration : MonoBehaviour
 
     //Chunk Generation
     public const int CHUNK_SIZE = 16;
-    public static int ChunkGenerationRange = 8;
+    public static int ChunkGenerationRange = 14;
     public static int ChunkReleaseRange = 20;
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
@@ -41,6 +42,8 @@ public class WorldGeneration : MonoBehaviour
 
     //Thread cancellation token for stopping threads when exited
     readonly CancellationTokenSource tokenSource = new();
+
+    public Queue<Chunk> chunkQueue = new Queue<Chunk>();
 
     public enum CoordinateMode
     {
@@ -56,13 +59,15 @@ public class WorldGeneration : MonoBehaviour
     // Start is called before the first frame update
     public void Start()
     {
-        GenerateChunks();
+        QueueChunks();
     }
 
     public void FixedUpdate()
     {
-        GenerateChunks();
+        QueueChunks();
         CheckReleaseChunks();
+
+        GenerateChunks();
     }
 
     [ContextMenu("Regenerate")]
@@ -75,14 +80,16 @@ public class WorldGeneration : MonoBehaviour
         primaryGenerator.Seed = (int)DateTime.Now.Ticks;
         noiseIsland.Seed = (int)DateTime.Now.Ticks;
 
-        GenerateChunks();
+        QueueChunks();
     }
 
     //Generated chunks around the player location
     //When a chunk is being generated it is put on the thread pool to devide the load between multiple CPU cores
-    public void GenerateChunks()
+    public void QueueChunks()
     {
         Vector2Int playerChunkLoc = WorldUtils.GetChunkLocation(Vector3Int.RoundToInt(PlayerTransform.position));
+
+        List<Chunk> chunkPositions = new List<Chunk>();
 
         for (int x = playerChunkLoc.x - ChunkGenerationRange; x < playerChunkLoc.x + ChunkGenerationRange; x++)
         {
@@ -94,10 +101,24 @@ public class WorldGeneration : MonoBehaviour
 
                 if (CreateChunk(chunkLoc, out Chunk newChunk))
                 {
-                    UniTask task = UniTask.RunOnThreadPool(() => GenerateChunk(newChunk, (chunLoc) => { ChunkReady.Invoke(chunkLoc); }), false, cancellationToken: tokenSource.Token);
+                    chunkPositions.Add(newChunk);
                 }
             }
         }
+
+        chunkPositions = chunkPositions.OrderBy((d) => (d.ChunkLocation - playerChunkLoc).sqrMagnitude).ToList();
+
+        foreach (var chunk in chunkPositions)
+        {
+            chunkQueue.Enqueue(chunk);
+        }
+    }
+
+    public void GenerateChunks()
+    {
+        if (chunkQueue.Count <= 0) return;
+        Chunk chunk = chunkQueue.Dequeue();
+        UniTask task = UniTask.RunOnThreadPool(() => GenerateChunk(chunk, (chunkLoc) => { ChunkReady.Invoke(chunkLoc); }), false, cancellationToken: tokenSource.Token);
     }
 
     public Chunk GenerateChunk(Chunk chunk, Action<Vector2Int> chunkReady)

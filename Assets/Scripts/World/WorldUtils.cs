@@ -22,7 +22,7 @@ public class WorldUtils : MonoBehaviour
     {
         if (WorldGeneration.ChunkDict.TryGetValue(chunkCoordinate, out Chunk chunk))
         {
-            return chunk.ChunkStatus == Chunk.CHUNK_STATUS.GENERATED;
+            return chunk.ChunkStatus == Chunk.CHUNK_STATUS.GENERATED || chunk.ChunkStatus == Chunk.CHUNK_STATUS.GENERATING;
         }
         else
             return false;

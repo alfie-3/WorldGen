@@ -39,7 +39,7 @@ public class TileInfoTooltip : MonoBehaviour
 
             if (WorldUtils.TryGetTile(WorldUtils.GetTopTileLocation(hitLoc), out Tile tile))
             {
-                ShowTooltip($"{tile.tileData.TileId} \n  {tile.TileLocationVect3} \n {WorldUtils.GetChunkLocation(hitLoc)} \n Matrix \n {tile.rotation} \n {tile.tileLocation}");
+                ShowTooltip($"{(tile.tileData != null ? tile.tileData.TileId : "None")} \n  {tile.TileLocationVect3} \n {WorldUtils.GetChunkLocation(hitLoc)} \n Matrix \n {tile.rotation} \n {tile.tileLocation}");
             }
             else HideTooltip();
         }

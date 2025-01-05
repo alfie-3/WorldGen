@@ -21,8 +21,25 @@ public class RuleTileData : TileData
                 new Vector3Int(1, 0, -1),
         //Above and Below Tiles
                 new Vector3Int(0, 1, 0),
-                new Vector3Int(0, -1, 0)
-
+                new Vector3Int(0, -1, 0),
+        //Top 8 ring
+                new Vector3Int(-1, 1, 1),
+                new Vector3Int(0, 1, 1),
+                new Vector3Int(1, 1, 1),
+                new Vector3Int(-1, 1, 0),
+                new Vector3Int(1, 1, 0),
+                new Vector3Int(-1, 1, -1),
+                new Vector3Int(0, 1, -1),
+                new Vector3Int(1, 1, -1),
+        //Bottom 8 ring
+                new Vector3Int(-1, -1, 1),
+                new Vector3Int(0, -1, 1),
+                new Vector3Int(1, -1, 1),
+                new Vector3Int(-1, -1, 0),
+                new Vector3Int(1, -1, 0),
+                new Vector3Int(-1, -1, -1),
+                new Vector3Int(0, -1, -1),
+                new Vector3Int(1, -1, -1),
     };
 
     public int[] GetNeighbours(Vector3Int location)
@@ -33,10 +50,11 @@ public class RuleTileData : TileData
         {
             if (WorldUtils.TryGetTile(location + NeighbourPositions[i], out Tile tile))
             {
-                if (tile.tileData is IBlockData)
+                if (tile.tileData is IBlockData || tile.tileData == null)
                     neighbours[i] = TilingRule.Neighbour.TilePresent;
                 else neighbours[i] = TilingRule.Neighbour.NoTile;
             }
+            else if ((location + NeighbourPositions[i]).y < 0) neighbours[i] = TilingRule.Neighbour.TilePresent;
             else neighbours[i] = TilingRule.Neighbour.NoTile;
         }
 
@@ -51,7 +69,9 @@ public class RuleTileData : TileData
         {
             if (rule.CheckReturnTile(neighbours, out TileData data, ref rotation))
             {
-                return data.GetTileData(position, ref rotation);
+                if (data != null)
+                    return data.GetTileData(position, ref rotation);
+                return null;
             }
         }
 
