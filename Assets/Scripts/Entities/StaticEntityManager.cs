@@ -73,7 +73,7 @@ public class StaticEntityManager : MonoBehaviour
         {
             Vector3Int globalTileLocation = WorldUtils.TileCoordinateLocalToGlobal(creationData.tileInfo.TileLocation, chunk.ChunkLocation);
 
-            TrackedStaticEntityLocations.TryAdd(globalTileLocation, new(chunk, creationData));
+            TrackedStaticEntityLocations.TryAdd(globalTileLocation, new(chunk, this, creationData));
         }
     }
 }
@@ -81,15 +81,17 @@ public class StaticEntityManager : MonoBehaviour
 public class TrackedStaticEntity
 {
     EntityContainer container;
+    readonly StaticEntityManager entityManager;
     readonly StaticEntity entityData;
 
     readonly Vector3Int globalLocation;
     readonly byte rotation;
 
-    public TrackedStaticEntity(Chunk chunk, StaticEntityTileData entityInfo)
+    public TrackedStaticEntity(Chunk chunk, StaticEntityManager manager, StaticEntityTileData entityInfo)
     {
         chunk.OnUpdatedChunkStatus += OnUpdatedChunkStatus;
         this.entityData = entityInfo.staticEntityData;
+        entityManager = manager;
 
         rotation = entityInfo.tileInfo.rotation;
         globalLocation = WorldUtils.TileCoordinateLocalToGlobal(entityInfo.tileInfo.TileLocation, chunk.ChunkLocation);
@@ -104,6 +106,7 @@ public class TrackedStaticEntity
 
         container = entityData.EntityPool.Pool.Get();
         container.transform.SetPositionAndRotation(globalLocation, Tile.GetRotation(rotation));
+        container.transform.parent = entityManager.transform;
     }
 
     public void OnUpdatedChunkStatus(Chunk.CHUNK_STATUS chunkStatus)

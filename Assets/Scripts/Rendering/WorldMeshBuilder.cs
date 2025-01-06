@@ -34,8 +34,8 @@ public class WorldMeshBuilder : MonoBehaviour {
     System.Random randomPicker = new System.Random();
 
     private void OnEnable() {
-        WorldGeneration.ChunkReady += (value) => chunkGenerationBuffer.Enqueue(value);
-        WorldGeneration.ChunkReleased += ReleaseChunk;
+        WorldGeneration.OnChunkReady += (value) => chunkGenerationBuffer.Enqueue(value);
+        WorldGeneration.OnChunkReleased += ReleaseChunk;
 
         Chunk.OnTileUpdate += UpdateTile;
     }

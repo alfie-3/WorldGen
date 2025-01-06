@@ -37,8 +37,8 @@ public class WorldGeneration : MonoBehaviour
     public const int MaxTerrainHeight = 8;
 
     //Chunk generation events
-    public static Action<Vector2Int> ChunkReady = delegate { };
-    public static Action<Vector2Int> ChunkReleased = delegate { };
+    public static Action<Vector2Int> OnChunkReady = delegate { };
+    public static Action<Vector2Int> OnChunkReleased = delegate { };
 
     //Thread cancellation token for stopping threads when exited
     readonly CancellationTokenSource tokenSource = new();
@@ -85,7 +85,6 @@ public class WorldGeneration : MonoBehaviour
     }
 
     //Generated chunks around the player location
-    //When a chunk is being generated it is put on the thread pool to devide the load between multiple CPU cores
     public void QueueChunks()
     {
         Vector2Int playerChunkLoc = WorldUtils.GetChunkLocation(Vector3Int.RoundToInt(PlayerTransform.position));
@@ -115,20 +114,27 @@ public class WorldGeneration : MonoBehaviour
         chunkList.Clear();
     }
 
-    public void GenerateChunks()
+    //Take chunks to generate from the queue and add them to the thread pool to be generated
+    public async void GenerateChunks()
     {
-        if (chunkQueue.Count <= 0) return;
-        Chunk chunk = chunkQueue.Dequeue();
-        UniTask task = UniTask.RunOnThreadPool(() => GenerateChunk(chunk, (chunkLoc) => { ChunkReady.Invoke(chunkLoc); }), false, cancellationToken: tokenSource.Token);
+        while (chunkQueue.Count > 0)
+        {
+            Chunk chunk = chunkQueue.Dequeue();
+            await UniTask.RunOnThreadPool(() => GenerateChunk(chunk, (chunk) => { }), true, cancellationToken: tokenSource.Token);
+            ChunkReady(chunk);
+        }
     }
 
-    public Chunk GenerateChunk(Chunk chunk, Action<Vector2Int> chunkReady)
+    public void ChunkReady(Chunk chunk)
+    {
+        OnChunkReady.Invoke(chunk.ChunkLocation);
+        chunk.SetStatus(Chunk.CHUNK_STATUS.GENERATED);
+    }
+
+    public Chunk GenerateChunk(Chunk chunk, Action<Chunk> chunkReady)
     {
         //Create tiles in chunk
         GenerateTiles(chunk);
-
-        //Chunk is finished
-        chunk.SetStatus(Chunk.CHUNK_STATUS.GENERATED);
 
         //Refreshes all tiles to enforce rules
         foreach (Tile tile in chunk.Tiles)
@@ -146,7 +152,7 @@ public class WorldGeneration : MonoBehaviour
 
         GenerateTerrainFeatures(chunk);
 
-        chunkReady(chunk.ChunkLocation);
+        chunkReady(chunk);
         return chunk;
     }
 
@@ -238,7 +244,7 @@ public class WorldGeneration : MonoBehaviour
             {
                 ChunkDict[loc].OnChunkRemoved.Invoke();
                 ChunkDict.Remove(loc, out Chunk value);
-                ChunkReleased.Invoke(loc);
+                OnChunkReleased.Invoke(loc);
             }
         }
     }

@@ -9,7 +9,6 @@ using UnityEngine.Pool;
 public class EntityPool
 {
     public ObjectPool<EntityContainer> Pool { get; private set; }
-
     EntityContainer entityPrefab;
 
     public void Init(EntityContainer entityPrefab)
