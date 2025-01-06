@@ -29,7 +29,7 @@ public class WorldGeneration : MonoBehaviour
     public const int CHUNK_SIZE = 16;
     public static int ChunkGenerationRange = 8;
     public static int ChunkSleepRange = ChunkGenerationRange + 1;
-    public static int ChunkReleaseRange = 40;
+    public static int ChunkReleaseRange = 20;
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
     //Terrain Params

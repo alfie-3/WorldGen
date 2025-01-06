@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class StaticEntityManager : MonoBehaviour
@@ -9,7 +10,7 @@ public class StaticEntityManager : MonoBehaviour
     public ConcurrentQueue<StaticEntityTileData> EntityCreationBuffer = new();
     public ConcurrentQueue<Vector3Int> EntityRemovalBuffer = new();
 
-    public Dictionary<Vector3Int, TrackedStaticEntity> TrackedStaticEntityLocations = new();
+    public static Dictionary<Vector3Int, TrackedStaticEntity> TrackedStaticEntityLocations = new();
 
     private void OnEnable()
     {

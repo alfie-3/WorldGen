@@ -22,6 +22,16 @@ public class WorldMeshBuilder : MonoBehaviour {
             public TileMeshInfo[,,] TileMeshInfos = new TileMeshInfo[WorldGeneration.CHUNK_SIZE, WorldGeneration.MaxTerrainHeight, WorldGeneration.CHUNK_SIZE];
             public CombineInstance[] cachedCombineInstances = new CombineInstance[0];
         }
+
+        public void ClearChunkData()
+        {
+            foreach (MaterialMeshData materialMesh in MaterialMeshes.Values)
+            {
+                materialMesh.mesh.Clear();
+                materialMesh.TileMeshInfos = null;
+                materialMesh.cachedCombineInstances = null;
+            }
+        }
     }
 
     [SerializeField] Material terrainMaterial;
@@ -106,6 +116,7 @@ public class WorldMeshBuilder : MonoBehaviour {
     //Releases chunk from rendering memory
     public void ReleaseChunk(Vector2Int chunkLoc) {
         if (ChunkDataDict.TryRemove(chunkLoc, out ChunkData chunkMeshData)) {
+            chunkMeshData.ClearChunkData();
             Destroy(chunkMeshData.Collider);
         }
     }
