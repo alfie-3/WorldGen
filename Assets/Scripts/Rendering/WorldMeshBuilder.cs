@@ -27,7 +27,7 @@ public class WorldMeshBuilder : MonoBehaviour {
         {
             foreach (MaterialMeshData materialMesh in MaterialMeshes.Values)
             {
-                materialMesh.mesh.Clear();
+                materialMesh.mesh = null;
                 materialMesh.TileMeshInfos = null;
                 materialMesh.cachedCombineInstances = null;
             }

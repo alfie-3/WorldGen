@@ -77,6 +77,10 @@ public class StaticEntityManager : MonoBehaviour
             TrackedStaticEntityLocations.TryAdd(globalTileLocation, new(chunk, this, creationData));
         }
     }
+
+    public void RemoveTrackedTileEntity(Vector3Int trackedEntityLoc) {
+        TrackedStaticEntityLocations.Remove(trackedEntityLoc);
+    }
 }
 
 public class TrackedStaticEntity
@@ -85,12 +89,16 @@ public class TrackedStaticEntity
     readonly StaticEntityManager entityManager;
     readonly StaticEntity entityData;
 
+    readonly Chunk chunk;
     readonly Vector3Int globalLocation;
     readonly byte rotation;
 
     public TrackedStaticEntity(Chunk chunk, StaticEntityManager manager, StaticEntityTileData entityInfo)
     {
         chunk.OnUpdatedChunkStatus += OnUpdatedChunkStatus;
+        chunk.OnChunkRemoved += OnRemove;
+
+        this.chunk = chunk;
         this.entityData = entityInfo.staticEntityData;
         entityManager = manager;
 
@@ -131,6 +139,11 @@ public class TrackedStaticEntity
     {
         if (container != null)
             entityData.EntityPool.Pool.Release(container);
+
+        chunk.OnUpdatedChunkStatus -= OnUpdatedChunkStatus;
+        chunk.OnChunkRemoved -= OnRemove;
+
+        entityManager.RemoveTrackedTileEntity(globalLocation);
     }
 }
 
