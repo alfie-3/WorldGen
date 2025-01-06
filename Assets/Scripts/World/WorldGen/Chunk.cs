@@ -12,9 +12,34 @@ public class Chunk
     public Tile[,,] Tiles = new Tile[WorldGeneration.CHUNK_SIZE, WorldGeneration.MaxTerrainHeight, WorldGeneration.CHUNK_SIZE];
 
     public static Action<Vector2Int> RefreshChunk = delegate { };
-
     public static Action<Vector2Int, TileInfo, TileInfo> OnTileUpdate = delegate { };
 
+    public Action<CHUNK_STATUS> OnUpdatedChunkStatus = delegate { };
+    public Action OnChunkRemoved = delegate { };
+
+    public enum CHUNK_STATUS
+    {
+        UNGENERATED,
+        GENERATING,
+        GENERATED,
+        SLEEPING
+    }
+
+    public CHUNK_STATUS ChunkStatus { get; private set; } = CHUNK_STATUS.UNGENERATED;
+
+    public Chunk(Vector2Int chunkLocation)
+    {
+        ChunkStatus = CHUNK_STATUS.UNGENERATED;
+        ChunkLocation = chunkLocation;
+    }
+
+    public void SetStatus(CHUNK_STATUS newStatus)
+    {
+        ChunkStatus = newStatus;
+        OnUpdatedChunkStatus(newStatus);
+    }
+
+    #region ChunkTile Management
     private Tile GetTile(Vector3Int coord)
     {
         if (CheckOutOfChunkRange(coord))
@@ -58,23 +83,9 @@ public class Chunk
 
         Tiles[coord.x, coord.y, coord.z] = null;
 
-        OnTileUpdate.Invoke(ChunkLocation, prevTileInfo, new TileInfo(Tiles[coord.x, coord.y, coord.z]));
-    }
+        TileInfo newTileInfo = new TileInfo(Tiles[coord.x, coord.y, coord.z]);
 
-    public enum CHUNK_STATUS
-    {
-        UNGENERATED,
-        GENERATING,
-        GENERATED,
-        SLEEPING
-    }
-
-    public CHUNK_STATUS ChunkStatus = CHUNK_STATUS.UNGENERATED;
-
-    public Chunk(Vector2Int chunkLocation)
-    {
-        ChunkStatus = CHUNK_STATUS.UNGENERATED;
-        ChunkLocation = chunkLocation;
+        OnTileUpdate.Invoke(ChunkLocation, prevTileInfo, newTileInfo);
     }
 
     public bool GetTile(Vector3Int coordinate, out Tile returnTile)
@@ -103,4 +114,5 @@ public class Chunk
 
         return true;
     }
+    #endregion
 }

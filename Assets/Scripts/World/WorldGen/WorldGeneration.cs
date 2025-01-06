@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.SocialPlatforms;
 
 public class WorldGeneration : MonoBehaviour
 {
@@ -28,8 +27,9 @@ public class WorldGeneration : MonoBehaviour
 
     //Chunk Generation
     public const int CHUNK_SIZE = 16;
-    public static int ChunkGenerationRange = 14;
-    public static int ChunkReleaseRange = 20;
+    public static int ChunkGenerationRange = 8;
+    public static int ChunkSleepRange = ChunkGenerationRange + 1;
+    public static int ChunkReleaseRange = 40;
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
     //Terrain Params
@@ -44,6 +44,7 @@ public class WorldGeneration : MonoBehaviour
     readonly CancellationTokenSource tokenSource = new();
 
     public Queue<Chunk> chunkQueue = new Queue<Chunk>();
+    public List<Chunk> chunkList;
 
     public enum CoordinateMode
     {
@@ -65,7 +66,7 @@ public class WorldGeneration : MonoBehaviour
     public void FixedUpdate()
     {
         QueueChunks();
-        CheckReleaseChunks();
+        UpdateChunkStatus();
 
         GenerateChunks();
     }
@@ -89,8 +90,6 @@ public class WorldGeneration : MonoBehaviour
     {
         Vector2Int playerChunkLoc = WorldUtils.GetChunkLocation(Vector3Int.RoundToInt(PlayerTransform.position));
 
-        List<Chunk> chunkPositions = new List<Chunk>();
-
         for (int x = playerChunkLoc.x - ChunkGenerationRange; x < playerChunkLoc.x + ChunkGenerationRange; x++)
         {
             for (int y = playerChunkLoc.y - ChunkGenerationRange; y < playerChunkLoc.y + ChunkGenerationRange; y++)
@@ -101,17 +100,19 @@ public class WorldGeneration : MonoBehaviour
 
                 if (CreateChunk(chunkLoc, out Chunk newChunk))
                 {
-                    chunkPositions.Add(newChunk);
+                    chunkList.Add(newChunk);
                 }
             }
         }
 
-        chunkPositions = chunkPositions.OrderBy((d) => (d.ChunkLocation - playerChunkLoc).sqrMagnitude).ToList();
+        chunkList = chunkList.OrderBy((d) => (d.ChunkLocation - playerChunkLoc).sqrMagnitude).ToList();
 
-        foreach (var chunk in chunkPositions)
+        foreach (var chunk in chunkList)
         {
             chunkQueue.Enqueue(chunk);
         }
+
+        chunkList.Clear();
     }
 
     public void GenerateChunks()
@@ -127,7 +128,7 @@ public class WorldGeneration : MonoBehaviour
         GenerateTiles(chunk);
 
         //Chunk is finished
-        chunk.ChunkStatus = Chunk.CHUNK_STATUS.GENERATED;
+        chunk.SetStatus(Chunk.CHUNK_STATUS.GENERATED);
 
         //Refreshes all tiles to enforce rules
         foreach (Tile tile in chunk.Tiles)
@@ -151,10 +152,8 @@ public class WorldGeneration : MonoBehaviour
 
     public bool CreateChunk(Vector2Int chunkLocation, out Chunk chunk)
     {
-        Chunk newChunk = new(chunkLocation)
-        {
-            ChunkStatus = Chunk.CHUNK_STATUS.GENERATING
-        };
+        Chunk newChunk = new(chunkLocation);
+        newChunk.SetStatus(Chunk.CHUNK_STATUS.GENERATING);
 
         chunk = newChunk;
 
@@ -218,18 +217,26 @@ public class WorldGeneration : MonoBehaviour
         return sample;
     }
 
-    private float SampleTerrainFeatureNoise(Vector2 location)
-    {
-        float sample = primaryGenerator.GetNoise(location);
-        return sample;
-    }
-
-    public void CheckReleaseChunks()
+    public void UpdateChunkStatus()
     {
         foreach (Vector2Int loc in ChunkDict.Keys)
         {
-            if (Vector2Int.Distance(WorldUtils.GetChunkLocation(Vector3Int.RoundToInt(PlayerTransform.position)), ChunkDict[loc].ChunkLocation) > ChunkReleaseRange)
+            float distance = Vector2Int.Distance(WorldUtils.GetChunkLocation(Vector3Int.RoundToInt(PlayerTransform.position)), ChunkDict[loc].ChunkLocation);
+
+            if (distance > ChunkSleepRange)
             {
+                if (ChunkDict[loc].ChunkStatus is not Chunk.CHUNK_STATUS.SLEEPING or Chunk.CHUNK_STATUS.GENERATING or Chunk.CHUNK_STATUS.UNGENERATED)
+                    ChunkDict[loc].SetStatus(Chunk.CHUNK_STATUS.SLEEPING);
+            }
+            else if (distance < ChunkSleepRange)
+            {
+                if (ChunkDict[loc].ChunkStatus is Chunk.CHUNK_STATUS.SLEEPING)
+                    ChunkDict[loc].SetStatus(Chunk.CHUNK_STATUS.GENERATED);
+            }
+
+            if (distance > ChunkReleaseRange)
+            {
+                ChunkDict[loc].OnChunkRemoved.Invoke();
                 ChunkDict.Remove(loc, out Chunk value);
                 ChunkReleased.Invoke(loc);
             }
