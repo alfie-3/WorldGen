@@ -637,6 +637,7 @@ MonoBehaviour:
   featuresGenerator: {fileID: 11400000, guid: 87e80e184358219469c469d6cc4f608f, type: 2}
   noiseIsland: {fileID: 11400000, guid: 4308316e340732a4c88d951639d99fc5, type: 2}
   featureFrequency: 0.18
+  chunkList: []
 --- !u!4 &1286674113
 Transform:
   m_ObjectHideFlags: 0
