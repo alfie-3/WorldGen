@@ -27,9 +27,7 @@ public class WorldMeshBuilder : MonoBehaviour {
         {
             foreach (MaterialMeshData materialMesh in MaterialMeshes.Values)
             {
-                materialMesh.mesh = null;
-                materialMesh.TileMeshInfos = null;
-                materialMesh.cachedCombineInstances = null;
+                Destroy(materialMesh.mesh);
             }
         }
     }
@@ -129,11 +127,11 @@ public class WorldMeshBuilder : MonoBehaviour {
 
             yield return CacheCombinerInstances(materialMeshData.Value);
 
-            Mesh mesh = new Mesh();
-            mesh.CombineMeshes(materialMeshData.Value.cachedCombineInstances, true, true);
-            mesh.Optimize();
-            mesh.RecalculateNormals();
-            materialMeshData.Value.mesh = mesh;
+            if (materialMeshData.Value.mesh == null) materialMeshData.Value.mesh = new();
+
+            materialMeshData.Value.mesh.CombineMeshes(materialMeshData.Value.cachedCombineInstances, true, true);
+            materialMeshData.Value.mesh.Optimize();
+            materialMeshData.Value.mesh.RecalculateNormals();
         }
 
         yield return null;

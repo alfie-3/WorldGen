@@ -10,6 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d748bd678936ff42929c70cc4356811, type: 3}
-  m_Name: TestEntity
+  m_Name: Entity_Tree
   m_EditorClassIdentifier: 
-  <EntityPrefab>k__BackingField: {fileID: 7313972868718148604, guid: ecd03206466e43243aad6c96816d9e91, type: 3}
+  <EntityPrefab>k__BackingField: {fileID: 7313972868718148604, guid: 3d1bad8eb4daf0647ba3e689e764bfa4, type: 3}

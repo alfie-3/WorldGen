@@ -633,6 +633,7 @@ MonoBehaviour:
   terrainRuleTile: {fileID: 11400000, guid: 693a9d0160d78594eb70695e6b153313, type: 2}
   terrainFeatures:
   - {fileID: 11400000, guid: b77ace3303ccc66478ffdc752e875262, type: 2}
+  - {fileID: 11400000, guid: 815e6b3d9772cef45955377e023ff10c, type: 2}
   primaryGenerator: {fileID: 11400000, guid: f50be40f3a69f7c4c88731ceef6e122f, type: 2}
   featuresGenerator: {fileID: 11400000, guid: 87e80e184358219469c469d6cc4f608f, type: 2}
   noiseIsland: {fileID: 11400000, guid: 4308316e340732a4c88d951639d99fc5, type: 2}

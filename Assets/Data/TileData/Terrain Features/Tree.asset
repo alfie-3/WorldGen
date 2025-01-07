@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a78fc847e07b58246ac1a6490f1c3f6f, type: 3}
-  m_Name: Test
+  m_Name: Tree
   m_EditorClassIdentifier: 
-  <TileId>k__BackingField: entity_test
-  <EntityData>k__BackingField: {fileID: 11400000, guid: b04933adb98996a42a2cb5ae655f2dde, type: 2}
+  <TileId>k__BackingField: entityTile_tree
+  <EntityData>k__BackingField: {fileID: 11400000, guid: 8783602f8564c9c40b9556349147d2d1, type: 2}

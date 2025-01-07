@@ -210,7 +210,7 @@ public class WorldGeneration : MonoBehaviour
                 topTileLoc.y++;
 
                 System.Random random = new System.Random(Thread.CurrentThread.ManagedThreadId);
-                chunk.SetTile(terrainFeatures[random.Next(0, terrainFeatures.Count - 1)], topTileLoc);
+                chunk.SetTile(terrainFeatures[random.Next(0, terrainFeatures.Count)], topTileLoc);
             }
         }
     }
