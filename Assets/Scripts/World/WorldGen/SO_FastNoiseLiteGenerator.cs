@@ -14,12 +14,14 @@ public class SO_FastNoiseLiteGenerator: ScriptableObject
 
     FastNoiseLite noise = null;
 
-    bool dirty;
     public Action NoiseValuesChanged;
 
     public float GetNoise(Vector2 coordinate)
     {
-        if (noise != null && !dirty) return noise.GetNoise(coordinate.x / NoiseScale, coordinate.y / NoiseScale); ;
+        if (noise != null)
+        {
+           return noise.GetNoise(coordinate.x / NoiseScale, coordinate.y / NoiseScale); ;
+        }
 
         CreateNoise();
 
@@ -38,15 +40,11 @@ public class SO_FastNoiseLiteGenerator: ScriptableObject
         noise.SetNoiseType(noiseType);
         noise.SetFractalType(fractalType);
         noise.SetDomainWarpType(domainWarpType);
+        Seed = (int)System.DateTime.Now.Ticks;
     }
 
     public void SetSeed(int seed)
     {
         noise.SetSeed(seed);
-    }
-
-    private void OnValidate()
-    {
-        dirty = true;
     }
 }

@@ -11,26 +11,26 @@ public class RuleTileData : TileData
     public static readonly Vector3Int[] NeighbourPositions =
     {
         //Surrounding Tiles
-                new Vector3Int(-1, 0, 1),
-                new Vector3Int(0, 0, 1),
-                new Vector3Int(1, 0, 1),
-                new Vector3Int(-1, 0, 0),
-                new Vector3Int(1, 0, 0),
-                new Vector3Int(-1, 0, -1),
-                new Vector3Int(0, 0, -1),
-                new Vector3Int(1, 0, -1),
+                new Vector3Int(-1, 0, 1), //0
+                new Vector3Int(0, 0, 1), //1
+                new Vector3Int(1, 0, 1), //2
+                new Vector3Int(-1, 0, 0), //3
+                new Vector3Int(1, 0, 0), //4
+                new Vector3Int(-1, 0, -1), //5
+                new Vector3Int(0, 0, -1), //6
+                new Vector3Int(1, 0, -1), //7
         //Above and Below Tiles
-                new Vector3Int(0, 1, 0),
-                new Vector3Int(0, -1, 0),
+                new Vector3Int(0, 1, 0), //8
+                new Vector3Int(0, -1, 0), //9
         //Top 8 ring
-                new Vector3Int(-1, 1, 1),
-                new Vector3Int(0, 1, 1),
-                new Vector3Int(1, 1, 1),
-                new Vector3Int(-1, 1, 0),
-                new Vector3Int(1, 1, 0),
-                new Vector3Int(-1, 1, -1),
-                new Vector3Int(0, 1, -1),
-                new Vector3Int(1, 1, -1),
+                new Vector3Int(-1, 1, 1), //10
+                new Vector3Int(0, 1, 1), //11
+                new Vector3Int(1, 1, 1), //12
+                new Vector3Int(-1, 1, 0), //13
+                new Vector3Int(1, 1, 0), //14
+                new Vector3Int(-1, 1, -1), //15
+                new Vector3Int(0, 1, -1), //16
+                new Vector3Int(1, 1, -1), //17
         //Bottom 8 ring
                 new Vector3Int(-1, -1, 1),
                 new Vector3Int(0, -1, 1),

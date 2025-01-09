@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7939e3810d79b554197f660cbe89bff0, type: 3}
+  m_Name: Middle
+  m_EditorClassIdentifier: 
+  <TileId>k__BackingField: Terrain_Middle
+  <BlockData>k__BackingField:
+    <TileMesh>k__BackingField: {fileID: 1385279003812690709, guid: 61f20381a49585d48872763e244283ec, type: 3}
+    <TileMaterials>k__BackingField:
+    - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
+    <Fullness>k__BackingField: 0

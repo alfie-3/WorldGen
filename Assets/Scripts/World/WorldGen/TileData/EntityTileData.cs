@@ -12,8 +12,9 @@ public class EntityTileData : TileData, IEntityData
 
     public override TileData GetTileData(Vector3Int position, ref byte rotation)
     {
-        System.Random random = new System.Random(Thread.CurrentThread.ManagedThreadId);
-        rotation = (byte)random.Next(0, 3);
+        System.Random random = new System.Random(position.sqrMagnitude);
+
+        rotation = (byte)random.Next(3);
         return base.GetTileData(position, ref rotation);
     }
 }
