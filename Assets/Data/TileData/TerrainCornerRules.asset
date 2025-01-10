@@ -15,9 +15,17 @@ MonoBehaviour:
   <TileId>k__BackingField: Terrain_CornerRuleTile
   DefaultTileData: {fileID: 11400000, guid: c3e9e3638759df246bba8592d2dd0e4a, type: 2}
   Rules:
+  - ElementName: Terrain_Corner_Cliff
+    tile: {fileID: 11400000, guid: 6e4385891b918034d88bd96ffeb3fb48, type: 2}
+    NeighbourRules: 0200000001000000000000000100000000000000000000000000000002000000010000000200000002000000010000000200000001000000020000000200000002000000
+    TileTransformation: 4
   - ElementName: Terrain_Corner
     tile: {fileID: 11400000, guid: c3e9e3638759df246bba8592d2dd0e4a, type: 2}
     NeighbourRules: 020000000100000000000000010000000000000000000000000000000200000002000000
+    TileTransformation: 4
+  - ElementName: Terrain_Slope_Cliff
+    tile: {fileID: 11400000, guid: 475211f5183376045bcd647113a62799, type: 2}
+    NeighbourRules: 020000000100000002000000010000000000000002000000000000000200000001000000
     TileTransformation: 4
   - ElementName: Terrain_Slope
     tile: {fileID: 11400000, guid: fbf1346c891152a4b9ce9b75602ae756, type: 2}

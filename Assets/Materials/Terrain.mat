@@ -93,7 +93,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_1c3c575b8b134ce082c865d5ccd8868b_Texture_1_Texture2D:
-        m_Texture: {fileID: 2800000, guid: 19e35927dc64ff545b9efed87c2ac210, type: 3}
+        m_Texture: {fileID: 2800000, guid: 1ac162a373f00374db50d8bb0079af9b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_482dc9a594cd4139ab45851b920e2e51_Texture_1_Texture2D:
@@ -154,9 +154,13 @@ Material:
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
+    - _Distance: 431.7
+    - _Distance_Clamp: 0.3
     - _DstBlend: 0
     - _DstBlendAlpha: 0
+    - _EdgePower: 1.24
     - _EnvironmentReflections: 1
+    - _FresnelPower: 5.27
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossinessSource: 0
@@ -171,6 +175,7 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _ReflectionSource: 0
+    - _ShadowPower: 0.84
     - _Shininess: 1
     - _Smoothness: 0.173
     - _SmoothnessTextureChannel: 0
@@ -178,13 +183,14 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
+    - _Strength: 0.3
     - _Surface: 0
     - _UVSec: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.7169812, g: 0.7169812, b: 0.7169812, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Offset: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 1, g: 1, b: 1, a: 1}

@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Leaves
+  m_Name: Bush
   m_Shader: {fileID: -6465566751694194690, guid: 836fece0882f16448a742a564b68f368, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -41,7 +41,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Base_Colour:
-        m_Texture: {fileID: 2800000, guid: e8df20958c48f4b4fa8691eafd20bb35, type: 3}
+        m_Texture: {fileID: 2800000, guid: 0e244869966e14e478ba5b11a077c903, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -81,7 +81,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Opacity:
-        m_Texture: {fileID: 2800000, guid: bb983694ba4f672458858592882f8fc5, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6609c4d6e9cf1b14cb09a6de5c13a4ab, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
@@ -130,8 +130,8 @@ Material:
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
-    - _PivotXY: 2.4
-    - _PivotZ: 3.5
+    - _PivotXY: 2
+    - _PivotZ: 2
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -141,8 +141,8 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _Wobble_Amount: 0.33
-    - _Wobble_Speed: 1.82
+    - _Wobble_Amount: 0.09
+    - _Wobble_Speed: 3.75
     - _WorkflowMode: 1
     - _XY: -2.61
     - _Z: 3.5
