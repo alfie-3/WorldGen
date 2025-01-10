@@ -117,11 +117,19 @@ Material:
     - _ClearCoatSmoothness: 0
     - _Cull: 2
     - _Cutoff: 0.5
+    - _Depth: 1.27
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
+    - _FlecksCutoff: 0.46
+    - _FlecksNoiseScale: -7.15
+    - _FlecksNoiseSpeed: 0.25
+    - _FoamAmount: 0.8
+    - _FoamCutoff: -1.07
+    - _FoamSize: 6.2
+    - _FoamSpeed: 0.24
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossinessSource: 0
@@ -145,6 +153,7 @@ Material:
     - _Speed: 0.3
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
+    - _Strength: 1.67
     - _Surface: 0
     - _UVSec: 0
     - _Warp_Speed: 0.63
@@ -154,7 +163,11 @@ Material:
     - _BaseColor: {r: 0.11307406, g: 0.6437543, b: 0.7264151, a: 1}
     - _Caustic_Colour: {r: 0.69900316, g: 0.74657756, b: 0.7924528, a: 0}
     - _Color: {r: 0.18609825, g: 0.7524385, b: 0.9622642, a: 1}
+    - _DeepColour: {r: 0.18098079, g: 0.41874075, b: 0.7830189, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _FlecksColour: {r: 5.2164755, g: 5.2164755, b: 5.2164755, a: 1}
+    - _FoamColour: {r: 1, g: 1, b: 1, a: 1}
+    - _ShallowColour: {r: 0.28773576, g: 0.8424322, b: 1, a: 0}
     - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []

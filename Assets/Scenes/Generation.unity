@@ -638,8 +638,10 @@ MonoBehaviour:
   primaryGenerator: {fileID: 11400000, guid: f50be40f3a69f7c4c88731ceef6e122f, type: 2}
   noiseIsland: {fileID: 11400000, guid: 4308316e340732a4c88d951639d99fc5, type: 2}
   featureGeneration:
-    grass: []
-    grassPatchGenerator: {fileID: 0}
+    grass:
+    - {fileID: 11400000, guid: ab1576f4ced705748862ce05680d3cb3, type: 2}
+    grassPatchGenerator: {fileID: 11400000, guid: a829f2cb32dcdcc498a1823999d8ad66, type: 2}
+    grassPatchThreshold: 0.48
     trees:
     - {fileID: 11400000, guid: 815e6b3d9772cef45955377e023ff10c, type: 2}
     treeRegionGenerator: {fileID: 11400000, guid: 3f7b264c84d78f844aa3ba10dde1f095, type: 2}
@@ -647,10 +649,11 @@ MonoBehaviour:
     treeRegionThreshold: 0.29
     treeFrequency: 0.68
     treeRandomFrequency: 0.16
-    rocks:
+    rocksAndBushes:
     - {fileID: 11400000, guid: b77ace3303ccc66478ffdc752e875262, type: 2}
+    - {fileID: 11400000, guid: 46aba13019f5c0f438a32c2cb30f9056, type: 2}
     rockScatterer: {fileID: 11400000, guid: 87e80e184358219469c469d6cc4f608f, type: 2}
-    rockFrequency: 0.15
+    rockAndBushFrequency: 0.24
   chunkList: []
 --- !u!4 &1286674113
 Transform:
@@ -815,7 +818,7 @@ Transform:
   m_GameObject: {fileID: 1360302150}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.55, z: 0}
+  m_LocalPosition: {x: 0, y: 0.8, z: 0}
   m_LocalScale: {x: 40, y: 1, z: 40}
   m_ConstrainProportionsScale: 0
   m_Children: []

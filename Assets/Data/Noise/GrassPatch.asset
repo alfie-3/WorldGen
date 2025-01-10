@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4105e8abc9555446b5b10c2e5ed683b, type: 3}
+  m_Name: GrassPatch
+  m_EditorClassIdentifier: 
+  <NoiseScale>k__BackingField: 0.14
+  noiseType: 0
+  fractalType: 1
+  domainWarpType: 0
+  Seed: -2109848017

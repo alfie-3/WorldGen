@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
-using static UnityEditor.FilePathAttribute;
 
 public class WorldGeneration : MonoBehaviour
 {
@@ -27,14 +26,14 @@ public class WorldGeneration : MonoBehaviour
 
     //Chunk Generation
     public const int CHUNK_SIZE = 16;
-    public static int ChunkGenerationRange = 8;
+    public static int ChunkGenerationRange = 12;
     public static int ChunkSleepRange = ChunkGenerationRange + 1;
     public static int ChunkReleaseRange = 20;
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
     //Terrain Params
-    public const int MaxTerrainGeneration = 5;
-    public const int MaxTerrainHeight = 8;
+    public const int MaxTerrainGeneration = 6;
+    public const int MaxTerrainHeight = 10;
 
     //Chunk generation events
     public static Action<Vector2Int> OnChunkReady = delegate { };
@@ -229,111 +228,5 @@ public class WorldGeneration : MonoBehaviour
 
         foreach (Transform child in transform)
             Destroy(child.gameObject);
-    }
-}
-
-[Serializable]
-public class FeatureGeneration
-{
-    [Header("Grass")]
-    [SerializeField] List<EntityTileData> grass;
-    [SerializeField] SO_FastNoiseLiteGenerator grassPatchGenerator;
-
-    [Header("Trees")]
-    [SerializeField] List<EntityTileData> trees;
-    [SerializeField] SO_FastNoiseLiteGenerator treeRegionGenerator;
-    [SerializeField] SO_FastNoiseLiteGenerator treeSparsenessGenerator;
-    [SerializeField] float treeRegionThreshold;
-    [Space]
-    [SerializeField] float treeFrequency;
-    [SerializeField] float treeRandomFrequency;
-
-    [Header("Rocks")]
-    [SerializeField] List<EntityTileData> rocks;
-    [SerializeField] SO_FastNoiseLiteGenerator rockScatterer;
-    [SerializeField] float rockFrequency;
-
-    public void GenerateFeatures(Chunk chunk)
-    {
-        System.Random random = new System.Random(Thread.CurrentThread.ManagedThreadId);
-
-        GenerateRocks(chunk, random);
-        GenerateTrees(chunk, random);
-    }
-
-    public void GenerateGrass(Chunk chunk)
-    {
-
-    }
-
-    public void GenerateTrees(Chunk chunk, System.Random random)
-    {
-        for (int x = 0; x < chunk.Tiles.GetLength(0); x++)
-        {
-            for (int z = 0; z < chunk.Tiles.GetLength(2); z++)
-            {
-                if (chunk.Tiles[x, 0, z] == null) continue;
-
-                Vector2Int sampleLoc = new Vector2Int(x + (chunk.ChunkLocation.x * WorldGeneration.CHUNK_SIZE), z + (chunk.ChunkLocation.y * WorldGeneration.CHUNK_SIZE));
-
-                float sample = treeRegionGenerator.GetNoiseClamped(sampleLoc);
-
-                if (sample > treeRegionThreshold)
-                {
-                    sample *= Mathf.Clamp01(treeSparsenessGenerator.GetNoiseClamped(sampleLoc));
-                    if (sample < 1 - treeFrequency) continue;
-                }
-                else
-                {
-                    if (treeSparsenessGenerator.GetNoiseClamped(sampleLoc) < 1 - treeRandomFrequency) continue;
-                }
-
-                Vector3Int topTileLoc = WorldUtils.GetTopTileLocation(new(sampleLoc.x, 0, sampleLoc.y));
-
-                if (!WorldUtils.TryGetTile(topTileLoc, out Tile tile)) continue;
-
-                BlockData blockData = GetBlockData(tile);
-                if (blockData == null) continue;
-
-                topTileLoc.y++;
-
-                chunk.SetTile(trees[random.Next(0, trees.Count)], topTileLoc);
-            }
-        }
-    }
-
-    public void GenerateRocks(Chunk chunk, System.Random random)
-    {
-        for (int x = 0; x < chunk.Tiles.GetLength(0); x++)
-        {
-            for (int z = 0; z < chunk.Tiles.GetLength(2); z++)
-            {
-                if (chunk.Tiles[x, 0, z] == null) continue;
-
-                Vector2Int sampleLoc = new Vector2Int(x + (chunk.ChunkLocation.x * WorldGeneration.CHUNK_SIZE), z + (chunk.ChunkLocation.y * WorldGeneration.CHUNK_SIZE));
-                if (rockScatterer.GetNoiseClamped(sampleLoc) < 1 - rockFrequency) continue;
-
-                Vector3Int topTileLoc = WorldUtils.GetTopTileLocation(new(sampleLoc.x, 0, sampleLoc.y));
-
-                if (!WorldUtils.TryGetTile(topTileLoc, out Tile tile)) continue;
-
-                BlockData blockData = GetBlockData(tile);
-                if (blockData == null) continue;
-
-                topTileLoc.y++;
-
-                chunk.SetTile(rocks[random.Next(0, rocks.Count)], topTileLoc);
-            }
-        }
-    }
-
-    public BlockData GetBlockData(Tile tile)
-    {
-        BlockData blockData = tile.tileData is not IBlockData iblockData ? null : iblockData.GetBlockData();
-
-        if (blockData == null) return null;
-        if (blockData.Fullness != TileFullness.Full) return null;
-
-        return blockData;
     }
 }
