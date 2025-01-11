@@ -35,6 +35,8 @@ public class CameraController : MonoBehaviour {
     Vector3 camStartRot;
     Quaternion newRot;
 
+    bool enabled = false;
+
     //public Quaternion newCamRot; // Make x rotation smaller so camera can see further when zooming in
 
     // Start is called before the first frame update
@@ -47,14 +49,21 @@ public class CameraController : MonoBehaviour {
         newRot = transform.rotation;
         camStartRot = targetCamera.localEulerAngles;
         newZoom = targetCamera.localPosition;
+
+        WorldGenerationEvents.Regenerate += () => { enabled = true; };
+        WorldGenerationEvents.BeginGeneration += () => { enabled = true; };
     }
 
     // Update is called once per frame
     void Update() {
+        if (Input.GetKeyDown(KeyCode.Escape)) enabled  = !enabled;
+
         HandleMovement();
     }
 
     public void HandleMovement() {
+        if (!enabled) return;
+
         if (Input.GetKey(KeyCode.LeftShift)) {
             sensitivity = fastSensitivity;
             rotationSensitivity = rotationFastSensitivity;

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Text;
 using TMPro;
 using UnityEngine;
 
@@ -23,17 +25,13 @@ public class GenerationUI : MonoBehaviour
 
         int seed;
 
-        try
-        {
-            seed = Int32.Parse(inputField.text);
-        }
-        catch
-        {
-            Debug.LogWarning("Could not parse string as int");
-            return;
-        }
+        using var algo = SHA1.Create();
+        var hash = BitConverter.ToInt32(algo.ComputeHash(Encoding.UTF8.GetBytes(inputField.text)));
+        System.Random rand = new System.Random(hash);
+        seed = rand.Next();
 
         SO_FastNoiseLiteGenerator.SetSeed(seed);
+
         WorldGenerationEvents.Generate();
         canvas.SetActive(false);
     }

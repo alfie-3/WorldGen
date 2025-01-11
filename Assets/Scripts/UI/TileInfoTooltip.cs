@@ -14,6 +14,8 @@ public class TileInfoTooltip : MonoBehaviour
 
     [SerializeField] TileData currentTileData;
 
+    bool toggled = false;
+
     Vector3Int hitLoc;
 
     private void Start()
@@ -23,6 +25,8 @@ public class TileInfoTooltip : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!toggled) return;
+
         Vector3 mousePos = Mouse.current.position.ReadValue();
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(transform.parent.GetComponent<RectTransform>(), mousePos, null, out Vector2 localPoint);
@@ -54,6 +58,7 @@ public class TileInfoTooltip : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F3))
         {
+            toggled = !toggled;
             canvas.enabled = !canvas.enabled;
         }
 
