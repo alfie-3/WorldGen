@@ -46,10 +46,27 @@ public class WorldMeshBuilder : MonoBehaviour {
         WorldGeneration.OnChunkReleased += ReleaseChunk;
 
         Chunk.OnTileUpdate += UpdateTile;
+        WorldGenerationEvents.Regenerate += OnRegenerate;
+    }
+
+    //Clears mesh data and clears queues when regeneration is called
+    private void OnRegenerate()
+    {
+        foreach (ChunkData chunk in ChunkDataDict.Values)
+        {
+            StopCoroutine(chunk.generationRoutine);
+            chunk.ClearChunkData();
+        }
+
+        chunkGenerationBuffer.Clear();
+        dirtyChunkBuffer.Clear();
+
+        ChunkDataDict.Clear();
     }
 
     private void Update() {
         //Buffers out chunk updates across multiple frames to prevent stuterring
+
         if (dirtyChunkBuffer.Any())
         {
             KeyValuePair<Vector2Int, byte> randomHashet = dirtyChunkBuffer.ElementAt(randomPicker.Next(dirtyChunkBuffer.Count));
@@ -185,9 +202,13 @@ public class WorldMeshBuilder : MonoBehaviour {
         BlockData blockData = tile.TileData is not IBlockData iblockData ? null : iblockData.GetBlockData();
         if (blockData == null) return;
 
-        if (ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(blockData.TileMaterials[0], out ChunkData.MaterialMeshData chunkMatData)) {
-            chunkMatData.TileMeshInfos[tile.TileLocation.x, tile.TileLocation.y, tile.TileLocation.z] = TileMeshInfo.Empty;
-            chunkMatData.dirty = true;
+        for (int i = 0; i < blockData.TileMaterials.Length; i++)
+        {
+            if (ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(blockData.TileMaterials[i], out ChunkData.MaterialMeshData chunkMatData))
+            {
+                chunkMatData.TileMeshInfos[tile.TileLocation.x, tile.TileLocation.y, tile.TileLocation.z] = TileMeshInfo.Empty;
+                chunkMatData.dirty = true;
+            }
         }
     }
 
@@ -195,18 +216,24 @@ public class WorldMeshBuilder : MonoBehaviour {
     public void AddTileData(Vector2Int chunkCoord, TileInfo tile) {
         BlockData blockData = tile.TileData is not IBlockData iblockData ? null : iblockData.GetBlockData();
         if (blockData == null) return;
-      
-        if (!ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(blockData.TileMaterials[0], out ChunkData.MaterialMeshData chunkMaterialData)) {
-            ChunkDataDict[chunkCoord].MaterialMeshes.TryAdd(blockData.TileMaterials[0], new());
-            chunkMaterialData = ChunkDataDict[chunkCoord].MaterialMeshes[blockData.TileMaterials[0]];
+
+        //Loops through a tiles materials and adds meshinfo for the mesh and submeshindex to support multiple materials per tile.
+        for (int i = 0; i < blockData.TileMaterials.Length; i++)
+        {
+            if (!ChunkDataDict[chunkCoord].MaterialMeshes.TryGetValue(blockData.TileMaterials[i], out ChunkData.MaterialMeshData chunkMaterialData))
+            {
+                ChunkDataDict[chunkCoord].MaterialMeshes.TryAdd(blockData.TileMaterials[i], new());
+                chunkMaterialData = ChunkDataDict[chunkCoord].MaterialMeshes[blockData.TileMaterials[i]];
+            }
+
+            chunkMaterialData.allocatedTileMeshInfo.Mesh = blockData.TileMesh;
+            chunkMaterialData.allocatedTileMeshInfo.subMeshIndex = i;
+            chunkMaterialData.allocatedTileMeshInfo.Transform = Matrix4x4.TRS(tile.TileLocation, Tile.GetRotation(tile.rotation), Vector3.one);
+
+            chunkMaterialData.TileMeshInfos[tile.TileLocation.x, tile.TileLocation.y, tile.TileLocation.z] = chunkMaterialData.allocatedTileMeshInfo;
+
+            chunkMaterialData.dirty = true;
         }
-
-        chunkMaterialData.allocatedTileMeshInfo.Mesh = blockData.TileMesh;
-        chunkMaterialData.allocatedTileMeshInfo.Transform = Matrix4x4.TRS(tile.TileLocation, Tile.GetRotation(tile.rotation), Vector3.one);
-
-        chunkMaterialData.TileMeshInfos[tile.TileLocation.x, tile.TileLocation.y, tile.TileLocation.z] = chunkMaterialData.allocatedTileMeshInfo;
-
-        chunkMaterialData.dirty = true;
     }
 
     //Sets chunk to dirty if it should be updated
@@ -238,20 +265,23 @@ public class WorldMeshBuilder : MonoBehaviour {
 
     public struct TileMeshInfo {
         public Matrix4x4 Transform;
+        public int subMeshIndex;
         public Mesh Mesh;
 
         public static readonly TileMeshInfo Empty = new(true);
         public bool IsEmpty;
 
-        public TileMeshInfo(Matrix4x4 transform, Mesh mesh) {
+        public TileMeshInfo(Matrix4x4 transform, Mesh mesh, int subMeshIndex) {
             this.Transform = transform;
             this.Mesh = mesh;
+            this.subMeshIndex = subMeshIndex;
             IsEmpty = false;
         }
 
         public TileMeshInfo(bool IsEmpty) {
             this.IsEmpty = true;
             Transform = Matrix4x4.zero;
+            subMeshIndex = 0;
             Mesh = null;
         }
     }

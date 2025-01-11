@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+[DefaultExecutionOrder(10)]
 public class StaticEntityManager : MonoBehaviour
 {
     public HashSet<EntityContainer> entities = new HashSet<EntityContainer>();
@@ -10,11 +11,25 @@ public class StaticEntityManager : MonoBehaviour
     public ConcurrentQueue<StaticEntityTileData> EntityCreationBuffer = new();
     public ConcurrentQueue<Vector3Int> EntityRemovalBuffer = new();
 
-    public static Dictionary<Vector3Int, TrackedStaticEntity> TrackedStaticEntityLocations = new();
+    public static ConcurrentDictionary<Vector3Int, TrackedStaticEntity> TrackedStaticEntityLocations = new();
 
     private void OnEnable()
     {
         Chunk.OnTileUpdate += OnTileUpdated;
+        WorldGenerationEvents.Regenerate += OnRegenerate;
+    }
+
+    private void OnRegenerate()
+    {
+        foreach (TrackedStaticEntity entity in TrackedStaticEntityLocations.Values)
+        {
+            entity.ReleaseEntity();
+        }
+
+        TrackedStaticEntityLocations = new ConcurrentDictionary<Vector3Int, TrackedStaticEntity>();
+
+        EntityCreationBuffer.Clear();
+        EntityRemovalBuffer.Clear();
     }
 
     private void FixedUpdate()
@@ -24,7 +39,7 @@ public class StaticEntityManager : MonoBehaviour
             if (EntityRemovalBuffer.TryDequeue(out var removed))
             {
                 TrackedStaticEntityLocations[removed].OnRemove();
-                TrackedStaticEntityLocations.Remove(removed);
+                TrackedStaticEntityLocations.TryRemove(removed, out _);
             }
         }
 
@@ -38,6 +53,8 @@ public class StaticEntityManager : MonoBehaviour
     public void OnTileUpdated(Vector2Int chunkCoord, TileInfo prev, TileInfo current)
     {
         Vector3Int globalTileLoc = WorldUtils.TileCoordinateLocalToGlobal(prev.TileLocation, chunkCoord);
+
+        if (globalTileLoc == null) return;
 
         if (TrackedStaticEntityLocations.ContainsKey(globalTileLoc))
         {
@@ -74,12 +91,14 @@ public class StaticEntityManager : MonoBehaviour
         {
             Vector3Int globalTileLocation = WorldUtils.TileCoordinateLocalToGlobal(creationData.tileInfo.TileLocation, chunk.ChunkLocation);
 
+            if (TrackedStaticEntityLocations.ContainsKey(globalTileLocation)) return;
+
             TrackedStaticEntityLocations.TryAdd(globalTileLocation, new(chunk, this, creationData));
         }
     }
 
     public void RemoveTrackedTileEntity(Vector3Int trackedEntityLoc) {
-        TrackedStaticEntityLocations.Remove(trackedEntityLoc);
+        TrackedStaticEntityLocations.TryRemove(trackedEntityLoc, out _);
     }
 }
 
@@ -135,10 +154,15 @@ public class TrackedStaticEntity
         }
     }
 
-    public void OnRemove()
+    public void ReleaseEntity()
     {
         if (container != null)
             entityData.EntityPool.Pool.Release(container);
+    }
+
+    public void OnRemove()
+    {
+        ReleaseEntity();
 
         chunk.OnUpdatedChunkStatus -= OnUpdatedChunkStatus;
         chunk.OnChunkRemoved -= OnRemove;

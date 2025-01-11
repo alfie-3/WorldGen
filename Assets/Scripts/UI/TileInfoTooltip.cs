@@ -52,6 +52,11 @@ public class TileInfoTooltip : MonoBehaviour
 
     public void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F3))
+        {
+            canvas.enabled = !canvas.enabled;
+        }
+
         //Removing tiles using left mouse click
         if (Input.GetMouseButtonDown(0))
         {

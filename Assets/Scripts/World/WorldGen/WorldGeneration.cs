@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 
+[DefaultExecutionOrder(15)]
 public class WorldGeneration : MonoBehaviour
 {
     [Header("Terrain Components")]
@@ -26,23 +27,25 @@ public class WorldGeneration : MonoBehaviour
 
     //Chunk Generation
     public const int CHUNK_SIZE = 16;
-    public static int ChunkGenerationRange = 12;
+    public static int ChunkGenerationRange = 8;
     public static int ChunkSleepRange = ChunkGenerationRange + 1;
     public static int ChunkReleaseRange = 20;
     public static ConcurrentDictionary<Vector2Int, Chunk> ChunkDict { get; private set; } = new();
 
     //Terrain Params
-    public const int MaxTerrainGeneration = 6;
-    public const int MaxTerrainHeight = 10;
+    public const int MaxTerrainGeneration = 5;
+    public const int MaxTerrainHeight = 7;
 
     //Chunk generation events
     public static Action<Vector2Int> OnChunkReady = delegate { };
     public static Action<Vector2Int> OnChunkReleased = delegate { };
 
     //Thread cancellation token for stopping threads when exited
-    readonly CancellationTokenSource tokenSource = new();
+    CancellationTokenSource tokenSource = new();
 
     public Queue<Chunk> chunkQueue = new Queue<Chunk>();
+    public ConcurrentQueue<Chunk> chunkReadyQueue = new ConcurrentQueue<Chunk>();
+
     [HideInInspector] public List<Chunk> chunkList;
 
     public enum CoordinateMode
@@ -54,33 +57,36 @@ public class WorldGeneration : MonoBehaviour
     public void Awake()
     {
         PlayerTransform = GameObject.FindGameObjectWithTag("Player").transform;
-    }
 
-    // Start is called before the first frame update
-    public void Start()
-    {
-        QueueChunks();
+        WorldGenerationEvents.Regenerate += Regenerate;
     }
 
     public void FixedUpdate()
     {
+        if (!WorldGenerationEvents.IsGenerating) return;
+
+        while (chunkReadyQueue.Count > 0)
+        {
+            if (chunkReadyQueue.TryDequeue(out Chunk chunk))
+            {
+                ChunkReady(chunk);
+            }
+        }
+
         QueueChunks();
         UpdateChunkStatus();
 
         GenerateChunks();
     }
 
-    [ContextMenu("Regenerate")]
     public void Regenerate()
     {
-        foreach (Transform child in transform)
-            Destroy(child.gameObject);
-        ChunkDict.Clear();
+        tokenSource.Cancel();
+        tokenSource.Dispose();
+        tokenSource = new();
 
-        primaryGenerator.Seed = (int)DateTime.Now.Ticks;
-        noiseIsland.Seed = (int)DateTime.Now.Ticks;
-
-        QueueChunks();
+        ChunkDict = new ConcurrentDictionary<Vector2Int, Chunk>();
+        chunkList.Clear();
     }
 
     //Generated chunks around the player location
@@ -114,13 +120,15 @@ public class WorldGeneration : MonoBehaviour
     }
 
     //Take chunks to generate from the queue and add them to the thread pool to be generated
-    public async void GenerateChunks()
+    public void GenerateChunks()
     {
         while (chunkQueue.Count > 0)
         {
             Chunk chunk = chunkQueue.Dequeue();
-            await UniTask.RunOnThreadPool(() => GenerateChunk(chunk, (chunk) => { }), true, cancellationToken: tokenSource.Token);
-            ChunkReady(chunk);
+
+            if (tokenSource.IsCancellationRequested) return;
+
+            var task = UniTask.RunOnThreadPool(() => GenerateChunk(chunk, (chunk) => { chunkReadyQueue.Enqueue(chunk); }), false, cancellationToken: tokenSource.Token);
         }
     }
 
@@ -225,6 +233,7 @@ public class WorldGeneration : MonoBehaviour
         ChunkDict.Clear();
 
         tokenSource.Cancel();
+        tokenSource.Dispose();
 
         foreach (Transform child in transform)
             Destroy(child.gameObject);
