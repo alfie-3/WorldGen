@@ -28,6 +28,18 @@ public class WorldUtils : MonoBehaviour
             return false;
     }
 
+    public static bool ChunkHasCollider(Vector2Int chunkCoordinate)
+    {
+        if (WorldMeshBuilder.ChunkDataDict.TryGetValue(chunkCoordinate, out var chunk))
+        {
+            if (chunk.Collider == null) return false;
+            if (chunk.Collider.sharedMesh == null) return false;
+            else return true;
+        }
+
+        return false;
+    }
+
     public static bool TryGetTile(Vector3Int tileCoordinate, out Tile returnTile)
     {
         returnTile = null;

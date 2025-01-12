@@ -124,7 +124,7 @@ public class FeatureGeneration
         }
     }
 
-    public BlockData GetBlockData(Tile tile)
+    public static BlockData GetBlockData(Tile tile)
     {
         BlockData blockData = tile.tileData is not IBlockData iblockData ? null : iblockData.GetBlockData();
 

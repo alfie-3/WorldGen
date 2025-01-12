@@ -15,6 +15,7 @@ MonoBehaviour:
   <TileId>k__BackingField: Terrain_Edge
   <BlockData>k__BackingField:
     <TileMesh>k__BackingField: {fileID: -1083108532252104561, guid: 61f20381a49585d48872763e244283ec, type: 3}
+    <ColliderMesh>k__BackingField: {fileID: 7826639656142173963, guid: 24cbca6fab63ae6448b3cf04e0446d13, type: 3}
     <TileMaterials>k__BackingField:
     - {fileID: 2100000, guid: 1cb05caa12b93d84990104aa666da87b, type: 2}
     <Fullness>k__BackingField: 0

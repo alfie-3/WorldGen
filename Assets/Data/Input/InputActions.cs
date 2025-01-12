@@ -53,6 +53,24 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Move"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""395afd8a-f069-4252-8427-d15e4c9b0849"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Jump"",
+                    ""type"": ""Button"",
+                    ""id"": ""7478bbc2-1a12-4e53-a6c5-d53415368d64"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -209,6 +227,72 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""action"": ""ZoomCam"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""ad7e1d6a-1c4f-4cac-9182-c99c154fb979"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""237e59b0-97d7-4066-ae93-cc9a5944295c"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""5159c097-e91c-4c83-a662-229f564a0f8d"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""3891301e-dcc5-4298-8f30-dd6f00a84bf0"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""09d06717-7e16-4dfb-a9bc-77245d1db6b6"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e4d7bdee-4293-463a-aa86-a50f3fee345b"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -220,6 +304,8 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_Default_MoveCam = m_Default.FindAction("MoveCam", throwIfNotFound: true);
         m_Default_SpinCam = m_Default.FindAction("SpinCam", throwIfNotFound: true);
         m_Default_ZoomCam = m_Default.FindAction("ZoomCam", throwIfNotFound: true);
+        m_Default_Move = m_Default.FindAction("Move", throwIfNotFound: true);
+        m_Default_Jump = m_Default.FindAction("Jump", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -284,6 +370,8 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Default_MoveCam;
     private readonly InputAction m_Default_SpinCam;
     private readonly InputAction m_Default_ZoomCam;
+    private readonly InputAction m_Default_Move;
+    private readonly InputAction m_Default_Jump;
     public struct DefaultActions
     {
         private @InputActions m_Wrapper;
@@ -291,6 +379,8 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         public InputAction @MoveCam => m_Wrapper.m_Default_MoveCam;
         public InputAction @SpinCam => m_Wrapper.m_Default_SpinCam;
         public InputAction @ZoomCam => m_Wrapper.m_Default_ZoomCam;
+        public InputAction @Move => m_Wrapper.m_Default_Move;
+        public InputAction @Jump => m_Wrapper.m_Default_Jump;
         public InputActionMap Get() { return m_Wrapper.m_Default; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -309,6 +399,12 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @ZoomCam.started += instance.OnZoomCam;
             @ZoomCam.performed += instance.OnZoomCam;
             @ZoomCam.canceled += instance.OnZoomCam;
+            @Move.started += instance.OnMove;
+            @Move.performed += instance.OnMove;
+            @Move.canceled += instance.OnMove;
+            @Jump.started += instance.OnJump;
+            @Jump.performed += instance.OnJump;
+            @Jump.canceled += instance.OnJump;
         }
 
         private void UnregisterCallbacks(IDefaultActions instance)
@@ -322,6 +418,12 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @ZoomCam.started -= instance.OnZoomCam;
             @ZoomCam.performed -= instance.OnZoomCam;
             @ZoomCam.canceled -= instance.OnZoomCam;
+            @Move.started -= instance.OnMove;
+            @Move.performed -= instance.OnMove;
+            @Move.canceled -= instance.OnMove;
+            @Jump.started -= instance.OnJump;
+            @Jump.performed -= instance.OnJump;
+            @Jump.canceled -= instance.OnJump;
         }
 
         public void RemoveCallbacks(IDefaultActions instance)
@@ -344,5 +446,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         void OnMoveCam(InputAction.CallbackContext context);
         void OnSpinCam(InputAction.CallbackContext context);
         void OnZoomCam(InputAction.CallbackContext context);
+        void OnMove(InputAction.CallbackContext context);
+        void OnJump(InputAction.CallbackContext context);
     }
 }

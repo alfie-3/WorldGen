@@ -16,6 +16,7 @@ public class BlockTileData : TileData, IBlockData
 public class BlockData
 {
     [field: SerializeField] public Mesh TileMesh { get; private set; }
+    [field: SerializeField] public Mesh ColliderMesh { get; private set; }
     [field: SerializeField] public Material[] TileMaterials { get; private set; }
 
     [field: SerializeField] public TileFullness Fullness { get; private set; } = TileFullness.Full;

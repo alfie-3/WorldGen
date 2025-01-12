@@ -6,6 +6,8 @@ public class CameraController : MonoBehaviour {
 
     public InputActions InputActions { get; private set; }
 
+    public static Transform playerTransform;
+
     [Header("Movement")]
     [SerializeField] float normalSpeed;
     [SerializeField] float fastSpeed;
@@ -27,6 +29,7 @@ public class CameraController : MonoBehaviour {
     [SerializeField] float zoomSpeed;
     [SerializeField] AnimationCurve fovCurve;
     [SerializeField] Vector2 minMaxZoom;
+    [SerializeField] float camZclamp;
 
     [SerializeField] float zoomAmount;
     Vector3 newPos;
@@ -35,7 +38,7 @@ public class CameraController : MonoBehaviour {
     Vector3 camStartRot;
     Quaternion newRot;
 
-    bool enabled = false;
+    [SerializeField] new bool enabled = false;
 
     //public Quaternion newCamRot; // Make x rotation smaller so camera can see further when zooming in
 
@@ -75,10 +78,15 @@ public class CameraController : MonoBehaviour {
         }
 
 
-        //Move camera
-        Vector2 movementVector = InputActions.Default.MoveCam.ReadValue<Vector2>();
-        Vector3 newMoveVector = movementVector.x * transform.right + movementVector.y * transform.forward;
-        newPos += newMoveVector * sensitivity * Time.deltaTime;
+        if (playerTransform == null)
+        {
+            //Move camera
+            Vector2 movementVector = InputActions.Default.MoveCam.ReadValue<Vector2>();
+            Vector3 newMoveVector = movementVector.x * transform.right + movementVector.y * transform.forward;
+            newPos += newMoveVector * sensitivity * Time.deltaTime;
+        }
+        else
+            newPos = playerTransform.transform.position;
 
         //Rotate Camera
         Vector2 rotationVector = InputActions.Default.SpinCam.ReadValue<Vector2>();
@@ -97,7 +105,7 @@ public class CameraController : MonoBehaviour {
                 newZoom -= zoomAmountV3;
 
             newZoom.y = Mathf.Clamp(newZoom.y, minMaxZoom.x, minMaxZoom.y);
-            newZoom.z = Mathf.Clamp(newZoom.z, -minMaxZoom.y, -minMaxZoom.x);
+            newZoom.z = Mathf.Clamp(-newZoom.y, -minMaxZoom.y, -camZclamp);
         }
 
         transform.SetPositionAndRotation(Vector3.Lerp(transform.position, newPos, Time.deltaTime * moveSpeed),
