@@ -1,7 +1,9 @@
+using Cysharp.Threading.Tasks;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,7 +11,7 @@ public class WorldMeshBuilder : MonoBehaviour
 {
     public class ChunkData
     {
-        public Coroutine generationRoutine;
+        public CancellationTokenSource cancellationTokenSource;
 
         public ConcurrentDictionary<Material, MaterialMeshData> MaterialMeshes = new();
 
@@ -68,7 +70,12 @@ public class WorldMeshBuilder : MonoBehaviour
     {
         foreach (ChunkData chunk in ChunkDataDict.Values)
         {
-            StopCoroutine(chunk.generationRoutine);
+            if (!chunk.cancellationTokenSource.IsCancellationRequested)
+            {
+                chunk.cancellationTokenSource.Cancel();
+                chunk.cancellationTokenSource.Dispose();
+            }
+
             chunk.ClearChunkData();
         }
 
@@ -106,22 +113,26 @@ public class WorldMeshBuilder : MonoBehaviour
     public void StartAddChunk(Vector2Int chunkLoc)
     {
         ChunkDataDict.TryAdd(chunkLoc, new ChunkData());
-        StartCoroutine(AddChunk(chunkLoc));
+        AddChunk(chunkLoc).Forget();
     }
 
     public void StartUpdateChunk(Vector2Int chunkLoc)
     {
         if (ChunkDataDict.TryGetValue(chunkLoc, out ChunkData chunkData))
         {
-            if (chunkData.generationRoutine != null)
-                StopCoroutine(chunkData.generationRoutine);
+            if (!chunkData.cancellationTokenSource.IsCancellationRequested)
+            {
+                chunkData.cancellationTokenSource.Cancel();
+                chunkData.cancellationTokenSource.Dispose();
+                chunkData.cancellationTokenSource = new();
+            }
 
-            chunkData.generationRoutine = StartCoroutine(UpdateChunkMesh(chunkLoc));
+            UpdateChunkMesh(chunkLoc, chunkData.cancellationTokenSource.Token).AttachExternalCancellation(chunkData.cancellationTokenSource.Token).Forget();
         }
     }
 
     //Adds a new chunk to the tile dictionary and builds the tilset from the current tiles
-    public IEnumerator AddChunk(Vector2Int coord)
+    public async UniTask AddChunk(Vector2Int coord)
     {
         if (WorldUtils.TryGetChunk(coord, out Chunk chunk))
         {
@@ -134,18 +145,20 @@ public class WorldMeshBuilder : MonoBehaviour
             }
         }
 
-        ChunkDataDict[coord].generationRoutine = StartCoroutine(UpdateChunkMesh(coord));
+        ChunkDataDict[coord].cancellationTokenSource = new();
 
-        yield return null;
+        await UpdateChunkMesh(coord, ChunkDataDict[coord].cancellationTokenSource.Token).AttachExternalCancellation(ChunkDataDict[coord].cancellationTokenSource.Token);
+
+        await UniTask.Yield();
     }
 
     //Updates chunk mesh at given coordinate
-    public IEnumerator UpdateChunkMesh(Vector2Int chunkLoc)
+    public async UniTask UpdateChunkMesh(Vector2Int chunkLoc, CancellationToken token)
     {
-        yield return GenerateChunkMeshData(chunkLoc);
-        yield return UpdateCollider(chunkLoc);
+        await GenerateChunkMeshData(chunkLoc).AttachExternalCancellation(token);
+        await UpdateCollider(chunkLoc).AttachExternalCancellation(token);
 
-        yield return null;
+        await UniTask.Yield();
     }
 
     //Releases chunk from rendering memory
@@ -164,14 +177,14 @@ public class WorldMeshBuilder : MonoBehaviour
     }
 
     //Generates a mesh per tile material by combining all the tiles using that material
-    public IEnumerator GenerateChunkMeshData(Vector2Int chunkPos)
+    public async UniTask GenerateChunkMeshData(Vector2Int chunkPos)
     {
         foreach (KeyValuePair<Material, ChunkData.MaterialMeshData> materialMeshData in ChunkDataDict[chunkPos].MaterialMeshes)
         {
             if (!materialMeshData.Value.dirty) continue;
             materialMeshData.Value.dirty = false;
 
-            yield return CacheCombinerInstances(materialMeshData.Value);
+            await CacheCombinerInstances(materialMeshData.Value);
 
             if (materialMeshData.Value.mesh == null) materialMeshData.Value.mesh = new();
 
@@ -180,12 +193,12 @@ public class WorldMeshBuilder : MonoBehaviour
             materialMeshData.Value.mesh.RecalculateNormals();
         }
 
-        yield return null;
+        await UniTask.Yield();
     }
 
 
     //Caches combine instances used by chunk mesh generator
-    public IEnumerator CacheCombinerInstances(ChunkData.MaterialMeshData materialMeshData)
+    public async UniTask CacheCombinerInstances(ChunkData.MaterialMeshData materialMeshData)
     {
         List<CombineInstance> combineInstances = new List<CombineInstance>();
 
@@ -201,16 +214,16 @@ public class WorldMeshBuilder : MonoBehaviour
         }
 
         materialMeshData.cachedCombineInstances = combineInstances.ToArray();
-        yield return null;
+        await UniTask.Yield();
     }
 
     //Updates the colliders to the new collision mesh
     //Creates a MeshCollider component if non is present for the chunk
-    public IEnumerator UpdateCollider(Vector2Int chunkLoc)
+    public async UniTask UpdateCollider(Vector2Int chunkLoc)
     {
         List<CombineInstance> combineInstances = new List<CombineInstance>();
 
-        if (!ChunkDataDict.TryGetValue(chunkLoc, out ChunkData chunkData)) yield return null;
+        if (!ChunkDataDict.TryGetValue(chunkLoc, out ChunkData chunkData)) await UniTask.Yield();
 
         foreach (TileMeshInfo meshInfo in chunkData.colliderTileMeshInfos)
         {
@@ -241,7 +254,7 @@ public class WorldMeshBuilder : MonoBehaviour
             ChunkDataDict[chunkLoc].Collider.sharedMesh = ChunkDataDict[chunkLoc].ColliderMesh;
         }
 
-        yield return null;
+        await UniTask.Yield();
     }
 
     //Updates the previous tile to the current tile, and removes the old one from its previous position
