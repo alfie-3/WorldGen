@@ -19,7 +19,7 @@ public class CameraFrustumManager : MonoBehaviour
 
     private static void OnBeginCameraRendering(ScriptableRenderContext ctx, Camera cam)
     {
-        cam.cullingMatrix = Matrix4x4.Ortho(-200, 200, -200, 200, 0.001f, 1000) *
+        cam.cullingMatrix = Matrix4x4.Ortho(-100, 100, -100, 200, 0.001f, 1000) *
                     cam.worldToCameraMatrix;
     }
     private static void OnEndCameraRendering(ScriptableRenderContext ctx, Camera cam)
